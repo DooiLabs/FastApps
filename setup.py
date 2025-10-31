@@ -1,11 +1,13 @@
 from setuptools import find_packages, setup
 
+from fastapps.core.utils import get_cli_version
+
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
     name="fastapps",
-    version="1.2.0",
+    version=get_cli_version(),
     author="FastApps Team",
     author_email="david@dooi.ai",
     description="A zero-boilerplate framework for building interactive ChatGPT widgets",

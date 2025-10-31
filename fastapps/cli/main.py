@@ -3,6 +3,8 @@
 import click
 from rich.console import Console
 
+from fastapps.core.utils import get_cli_version
+
 from .commands.build import build_command
 from .commands.cloud import cloud
 from .commands.create import create_widget
@@ -12,16 +14,9 @@ from .commands.use import use_integration
 
 console = Console()
 
-# Get version from package metadata
-try:
-    from importlib.metadata import version
-    __version__ = version("fastapps")
-except Exception:
-    __version__ = "unknown"
-
 
 @click.group()
-@click.version_option(version=__version__, prog_name="fastapps")
+@click.version_option(version=get_cli_version(), prog_name="fastapps")
 def cli():
     """FastApps - ChatGPT Widget Framework
 

@@ -7,9 +7,8 @@ import subprocess
 from pathlib import Path
 
 from rich.console import Console
-from importlib.metadata import version
 
-__version__ = version("fastapps")
+from fastapps.core.utils import get_cli_version
 
 console = Console()
 
@@ -113,7 +112,7 @@ if __name__ == "__main__":
 
 REQUIREMENTS_TXT = f"""# All dependencies included in fastapps package
 # pip install fastapps (or: uv pip install fastapps) is all you need!
-fastapps>={__version__}
+fastapps>={get_cli_version()}
 """
 
 

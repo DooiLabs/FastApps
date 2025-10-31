@@ -7,14 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
 
-# Get version from package metadata
-try:
-    from importlib.metadata import version
-
-    __version__ = version("fastapps")
-except Exception:
-    __version__ = "1.1.2"  # Fallback version
-
+from fastapps.core.utils import get_cli_version
 
 class ArtifactPackager:
     """Packages FastApps project for deployment."""
@@ -125,7 +118,7 @@ class ArtifactPackager:
             Manifest dictionary
         """
         return {
-            "fastapps_version": __version__,
+            "fastapps_version": get_cli_version(),
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "project_name": self._get_project_name(),
             "widgets": self._list_widgets(),
