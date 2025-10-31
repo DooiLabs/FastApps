@@ -1,2 +1,0 @@
-# All dependencies included in fastapps package
-# pip install fastapps (or: uv pip install fastapps) is all you need!

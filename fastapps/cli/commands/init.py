@@ -7,6 +7,9 @@ import subprocess
 from pathlib import Path
 
 from rich.console import Console
+from importlib.metadata import version
+
+__version__ = version("fastapps")
 
 console = Console()
 
@@ -15,16 +18,32 @@ SERVER_MAIN_TEMPLATE = '''from pathlib import Path
 import sys
 import importlib
 import inspect
+import argparse
+import re
+from typing import Dict
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import FastApps framework
-from fastapps import WidgetBuilder, WidgetMCPServer, BaseWidget
+from fastapps import WidgetBuilder, WidgetMCPServer, BaseWidget, WidgetBuildResult
 import uvicorn
 
 PROJECT_ROOT = Path(__file__).parent.parent
 TOOLS_DIR = Path(__file__).parent / "tools"
+ASSETS_DIR = PROJECT_ROOT / "assets"
+
+def fetch_build_results() -> Dict[str, WidgetBuildResult]:
+    """Parse built widget HTML files from assets directory."""
+    results = {}
+    for html_file in ASSETS_DIR.glob("*-*.html"):
+        match = re.match(r"(.+)-([0-9a-f]{4})\\.html$", html_file.name)
+        if match:
+            name, hash_val = match.groups()
+            results[name] = WidgetBuildResult(
+                name=name, hash=hash_val, html=html_file.read_text()
+            )
+    return results
 
 def auto_load_tools(build_results):
     """Automatically discover and load all widget tools."""
@@ -46,9 +65,25 @@ def auto_load_tools(build_results):
             print(f"[ERROR] Error loading {tool_file.name}: {e}")
     return tools
 
-# Build all widgets
-builder = WidgetBuilder(PROJECT_ROOT)
-build_results = builder.build_all()
+# Parse command-line arguments
+parser = argparse.ArgumentParser(description="FastApps MCP Server")
+parser.add_argument(
+    "--build",
+    action="store_true",
+    help="Build widgets on startup (for development)"
+)
+args = parser.parse_args()
+
+# Load build results
+if args.build:
+    # Build widgets on startup
+    print(f"[INFO] Building widgets")
+    builder = WidgetBuilder(PROJECT_ROOT)
+    build_results = builder.build_all()
+else:
+    # Load pre-built widgets from assets directory
+    print(f"[INFO] Loading pre-built widgets from assets")
+    build_results = fetch_build_results()
 
 # Auto-load and register tools
 tools = auto_load_tools(build_results)
@@ -76,8 +111,9 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8001)
 '''
 
-REQUIREMENTS_TXT = """# All dependencies included in fastapps package
+REQUIREMENTS_TXT = f"""# All dependencies included in fastapps package
 # pip install fastapps (or: uv pip install fastapps) is all you need!
+fastapps>={__version__}
 """
 
 

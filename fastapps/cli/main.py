@@ -3,6 +3,8 @@
 import click
 from rich.console import Console
 
+from .commands.build import build_command
+from .commands.cloud import cloud
 from .commands.create import create_widget
 from .commands.dev import start_dev_server
 from .commands.init import init_project
@@ -118,10 +120,12 @@ def dev(port, host):
 @cli.command()
 def build():
     """Build widgets for production."""
-    console.print("[green]Building widgets...[/green]")
-    console.print("[yellow]This feature will be implemented in Phase 4[/yellow]")
-    console.print("\n[cyan]For now, use:[/cyan]")
-    console.print("  npm run build")
+    build_command()
+
+
+# Register cloud command group
+cli.add_command(cloud)
+
 
 @cli.command()
 def auth_info():
