@@ -125,18 +125,6 @@ def start_dev_server(port=8001, host="0.0.0.0"):
         )
         return False
 
-    # Build widgets first
-    console.print("[cyan]Building widgets...[/cyan]")
-    try:
-        subprocess.run(["npm", "run", "build"], check=True, capture_output=True)
-        console.print("[green]✓ Widgets built[/green]\n")
-    except subprocess.CalledProcessError:
-        console.print("[yellow]Build failed. Make sure npm packages are installed[/yellow]")
-        return False
-    except FileNotFoundError:
-        console.print("[red]npm not found[/red]")
-        return False
-
     # Check if cloudflared is installed
     if not check_cloudflared_installed():
         console.print("[yellow]cloudflared not found[/yellow]")
@@ -161,6 +149,7 @@ def start_dev_server(port=8001, host="0.0.0.0"):
 
         # Import project server
         sys.path.insert(0, str(Path.cwd()))
+        sys.argv.append("--build")  # Enable build mode for development
         from server.main import app
 
         # Create server config

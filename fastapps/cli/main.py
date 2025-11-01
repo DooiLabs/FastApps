@@ -3,6 +3,10 @@
 import click
 from rich.console import Console
 
+from fastapps.core.utils import get_cli_version
+
+from .commands.build import build_command
+from .commands.cloud import cloud
 from .commands.create import create_widget
 from .commands.dev import start_dev_server
 from .commands.init import init_project
@@ -10,16 +14,9 @@ from .commands.use import use_integration
 
 console = Console()
 
-# Get version from package metadata
-try:
-    from importlib.metadata import version
-    __version__ = version("fastapps")
-except Exception:
-    __version__ = "unknown"
-
 
 @click.group()
-@click.version_option(version=__version__, prog_name="fastapps")
+@click.version_option(version=get_cli_version(), prog_name="fastapps")
 def cli():
     """FastApps - ChatGPT Widget Framework
 
@@ -118,10 +115,12 @@ def dev(port, host):
 @cli.command()
 def build():
     """Build widgets for production."""
-    console.print("[green]Building widgets...[/green]")
-    console.print("[yellow]This feature will be implemented in Phase 4[/yellow]")
-    console.print("\n[cyan]For now, use:[/cyan]")
-    console.print("  npm run build")
+    build_command()
+
+
+# Register cloud command group
+cli.add_command(cloud)
+
 
 @cli.command()
 def auth_info():

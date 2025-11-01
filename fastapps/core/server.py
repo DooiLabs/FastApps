@@ -3,14 +3,10 @@ from typing import Any, Dict, List, Optional
 from fastmcp import FastMCP
 from mcp import types
 
+from fastapps.core.utils import get_cli_version
+
 from .widget import BaseWidget, ClientContext, UserContext
 
-# Get version from package
-try:
-    from importlib.metadata import version
-    __version__ = version("fastapps")
-except Exception:
-    __version__ = "1.1.2"  # Fallback version
 
 # Auth imports (optional, graceful degradation if not available)
 try:
@@ -156,7 +152,7 @@ class WidgetMCPServer:
                 types.InitializeResult(
                     protocolVersion=req.params.protocolVersion,
                     capabilities=types.ServerCapabilities(),
-                    serverInfo=types.Implementation(name="FastApps", version=__version__),
+                    serverInfo=types.Implementation(name="FastApps", version=get_cli_version(),
                 )
             )
 
