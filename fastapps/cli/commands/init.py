@@ -67,7 +67,7 @@ server = WidgetMCPServer(name="my-widgets", widgets=tools)
 #     auth_required_scopes=["user"],
 # )
 #
-# See docs: https://fastapps.dev/docs/auth
+# See docs: https://fastapps.org/docs/auth
 
 app = server.get_app()
 

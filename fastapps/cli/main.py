@@ -163,10 +163,6 @@ def auth_info():
     console.print("  [dim]async def execute(self, input_data, context, user):[/dim]")
     console.print("  [dim]    if user.is_authenticated:[/dim]")
     console.print("  [dim]        return {'user_id': user.subject}[/dim]")
-
-    console.print("\n[cyan]Documentation:[/cyan]")
-    console.print("  Server auth: docs/08-AUTH.md")
-    console.print("  Per-widget auth: docs/09-PER-WIDGET-AUTH.md")
     console.print()
 
 

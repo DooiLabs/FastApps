@@ -27,59 +27,65 @@
 
 ## Quick Start
 
+We recommend installing FastApp with [uv](https://docs.astral.sh/uv/):
+
 ```bash
-# 0. Set virtual environment (recommended)
-python -m venv .venv
-source .venv/bin/activate # Mac/Linux
-.venv\Scripts\Activate.ps1 # Windows PowerShell
-
-# 1. Install
-pip install fastapps
-# Or with uv (faster, modern alternative):
-# uv pip install fastapps
-
-# 2. Create project (includes example widget + auto npm install)
-fastapps init my-app
-
-# 3. Run
-cd my-app
-fastapps dev
+uv pip install fastmcp
 ```
-That's it! Your example widget is now running at a public URL.
-On first run, you'll need an [ngrok auth token](https://dashboard.ngrok.com/get-started/your-authtoken) (free).
+
+For full installation instructions, including verification, upgrading from the official MCPSDK, and developer setup, see the Installation Guide.
+
+then, you can quickstart by running commands below :
+
+```bash
+fastapps init my-app
+cd my-app
+fastapp dev
+```
+
+That's it! You'll gonna see an image with a public url. You can test the server with following guides.
+
+![alt text](image.png)
+
+The public url is one-time, generated with [cloudflare tunnel](https://github.com/cloudflare/cloudflared).
 
 
 ## Test App
 
+MCP server is available at `/mcp` endpoint of fastapps server. \
+Example : https://your-public-url.trycloudflare.com/mcp
+
 **Option A: Test on MCPJam Inspector**
 
-Add your public URL + /mcp to ChatGPT:
-Example: https://xyz.ngrok-free.app/mcp
+Add your public URL + /mcp to ChatGPT.
+
 ```bash
 npx @mcpjam/inspector@latest
 ```
 
 **Option B: Test on ChatGPT**
 
-Add your public URL + /mcp to ChatGPT's "Settings > Connectors":
-Example: https://xyz.ngrok-free.app/mcp
-
+Add your public URL + /mcp to ChatGPT's `"Settings > Connectors"` . 
 
 
 ## Creating More Widgets
 
 ```bash
-fastapps create another-widget
+fastapps create additional-widget
 ```
 
 
 ### Editing Your Widget
 
-**You only need to edit these 2 files:**
+**You'll only need to edit these 2 folders:**
 
-#### `server/tools/my_widget_tool.py` - Backend Logic
+#### `server/tools/`
 
-```python
+This folder contains backend `.py` files, where you define conditions & server logics for the app.
+
+Example : 
+```python 
+### my_widget_tool.py
 from fastapps import BaseWidget, Field, ConfigDict
 from pydantic import BaseModel
 from typing import Dict, Any
@@ -108,9 +114,14 @@ class MyWidgetTool(BaseWidget):
         }
 ```
 
-#### `widgets/my-widget/index.jsx` - Frontend UI
+#### `widgets/` - Frontend UI
+
+The folder contains frontend component codes that will show up on the app screen according to the rules you've define with python codes above.
+
+Apps in GPT components are react components - FastApps follows it. You can custom compoenents as you wish.
 
 ```jsx
+// my-widget/index.jsx
 import React from 'react';
 import { useWidgetProps } from 'fastapps';
 
