@@ -30,7 +30,7 @@
 We recommend installing FastApps with [uv](https://docs.astral.sh/uv/):
 
 ```bash
-uv pip install fastapps
+uv tool install fastapps
 ```
 
 For full installation instructions, including verification, upgrading from the official MCPSDK, and developer setup, see the Installation Guide.
