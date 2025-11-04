@@ -40,7 +40,7 @@ then, you can quickstart by running commands below :
 ```bash
 fastapps init my-app
 cd my-app
-fastapp dev
+fastapps dev
 ```
 
 That's it! You'll gonna see an image with a public url. You can test the server with following guides.
