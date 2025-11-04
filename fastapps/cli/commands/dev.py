@@ -149,7 +149,8 @@ def start_dev_server(port=8001, host="0.0.0.0"):
 
         # Import project server
         sys.path.insert(0, str(Path.cwd()))
-        sys.argv.append("--build")  # Enable build mode for development
+        # Reset sys.argv to avoid argparse conflicts in server/main.py
+        sys.argv = ["server/main.py", "--build"]  # Enable build mode for development
         from server.main import app
 
         # Create server config
