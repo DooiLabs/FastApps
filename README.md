@@ -75,6 +75,17 @@ Add your public URL + /mcp to ChatGPT's `"Settings > Connectors"` .
 fastapps create additional-widget
 ```
 
+### Using Widget Templates
+
+FastApps provides pre-built templates to jumpstart your widget development:
+
+```bash
+# Create widget from a template
+fastapps create my-list --list          # Vertical list with items
+fastapps create my-carousel --carousel  # Horizontal scrolling cards
+fastapps create my-albums --albums      # Photo gallery viewer
+```
+
 
 ### Editing Your Widget
 

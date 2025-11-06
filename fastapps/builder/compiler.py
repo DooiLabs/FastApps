@@ -1,3 +1,4 @@
+import os
 import platform
 import re
 import shutil
@@ -31,9 +32,13 @@ class WidgetBuilder:
         self.widgets_dir = self.project_root / "widgets"
         self.framework_dir = Path(__file__).parent
 
-    def build_all(self) -> Dict[str, WidgetBuildResult]:
+    def build_all(self, mode: str = "hosted") -> Dict[str, WidgetBuildResult]:
         """
         Build all widgets in the project.
+
+        Args:
+            mode: Build mode - "hosted" (default, external JS/CSS references) or
+                  "inline" (self-contained HTML)
 
         Returns:
             Dictionary mapping widget names to build results.
@@ -41,13 +46,25 @@ class WidgetBuilder:
         # 1. Auto-discover widgets
         self._discover_widgets()
 
-        # 2. Copy framework's build script to project (if not exists)
+        # 2. Ensure unified build script exists in project (if not exists)
         self._ensure_build_script()
 
         # 3. Run build (Windows-compatible)
         npx_cmd = "npx.cmd" if platform.system() == "Windows" else "npx"
+        build_script = "build-all.mts"
+
+        # Pass mode and BASE_URL (for hosted) via environment
+        env = os.environ.copy()
+        # Explicit mode for the script
+        env["MODE"] = mode
+        if mode == "hosted":
+            env["BASE_URL"] = env.get("BASE_URL", "http://localhost:4444")
+
         subprocess.run(
-            [npx_cmd, "tsx", "build-all.mts"], cwd=self.project_root, check=True
+            [npx_cmd, "tsx", build_script],
+            cwd=self.project_root,
+            check=True,
+            env=env
         )
 
         # 4. Parse results
@@ -57,25 +74,32 @@ class WidgetBuilder:
         """
         Ensure build script exists.
 
-        The build script is provided by flick-react NPM package.
-        Users should have 'flick-react' installed as a devDependency.
+        Args:
+            mode: Build mode - determines which script to copy
         """
-        project_build_script = self.project_root / "build-all.mts"
+        # Use unified build script name
+        script_name = "build-all.mts"
 
-        # Check if flick-react is installed in node_modules
-        chatjs_build_script = (
-            self.project_root / "node_modules" / "fastapps" / "build-all.mts"
-        )
+        project_build_script = self.project_root / script_name
+        framework_build_script = self.framework_dir / script_name
 
+        # Copy from framework if not exists
         if not project_build_script.exists():
-            if chatjs_build_script.exists():
-                # Copy from node_modules
-                shutil.copy(chatjs_build_script, project_build_script)
-                print("Copied build script from fastapps package")
+            if framework_build_script.exists():
+                shutil.copy(framework_build_script, project_build_script)
+                print(f"Copied {script_name} from FastApps framework")
             else:
-                raise FileNotFoundError(
-                    "build-all.mts not found. Please install fastapps: npm install --save-dev fastapps"
+                # Fallback: check node_modules
+                node_modules_script = (
+                    self.project_root / "node_modules" / "fastapps" / script_name
                 )
+                if node_modules_script.exists():
+                    shutil.copy(node_modules_script, project_build_script)
+                    print(f"Copied {script_name} from fastapps package")
+                else:
+                    raise FileNotFoundError(
+                        f"{script_name} not found. Please install fastapps: npm install --save-dev fastapps"
+                    )
 
     def _discover_widgets(self):
         """

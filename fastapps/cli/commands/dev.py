@@ -1,10 +1,14 @@
 """Development server command with Cloudflare Tunnel integration."""
 
+import http.server
 import json
+import os
 import platform
 import re
+import socketserver
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -114,8 +118,40 @@ def start_cloudflare_tunnel(port: int) -> tuple[subprocess.Popen, str]:
     return process, public_url
 
 
-def start_dev_server(port=8001, host="0.0.0.0"):
-    """Start development server with Cloudflare Tunnel."""
+def start_asset_server(assets_dir: Path, port: int = 4444):
+    """
+    Start static file server for assets (hosted mode).
+
+    Serves files from the assets directory with CORS headers enabled.
+    """
+    class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, directory=str(assets_dir), **kwargs)
+
+        def end_headers(self):
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+            self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+            super().end_headers()
+
+        def log_message(self, format, *args):
+            # Suppress request logs to keep output clean
+            pass
+
+    handler = CORSHTTPRequestHandler
+    with socketserver.TCPServer(("", port), handler) as httpd:
+        console.print(f"[green]✓ Asset server running on http://localhost:{port}[/green]")
+        httpd.serve_forever()
+
+
+def start_dev_server(port=8001, host="0.0.0.0", mode="hosted"):
+    """Start development server with Cloudflare Tunnel.
+
+    Args:
+        port: Port for MCP server (default: 8001)
+        host: Host to bind server (default: "0.0.0.0")
+        mode: Build mode - "hosted" (default) or "inline"
+    """
 
     # Check if we're in a FastApps project
     if not Path("server/main.py").exists():
@@ -124,6 +160,24 @@ def start_dev_server(port=8001, host="0.0.0.0"):
             "[yellow]Run this command from your project root (where server/main.py exists)[/yellow]"
         )
         return False
+
+    # Start asset server if hosted mode
+    asset_server_thread = None
+    if mode == "hosted":
+        assets_dir = Path.cwd() / "assets"
+        if not assets_dir.exists():
+            console.print("[yellow]Creating assets directory...[/yellow]")
+            assets_dir.mkdir(parents=True, exist_ok=True)
+
+        console.print(f"[cyan]Starting asset server on port 4444...[/cyan]")
+        asset_server_thread = threading.Thread(
+            target=start_asset_server,
+            args=(assets_dir, 4444),
+            daemon=True
+        )
+        asset_server_thread.start()
+        time.sleep(0.5)
+        console.print()
 
     # Check if cloudflared is installed
     if not check_cloudflared_installed():
@@ -150,7 +204,8 @@ def start_dev_server(port=8001, host="0.0.0.0"):
         # Import project server
         sys.path.insert(0, str(Path.cwd()))
         # Reset sys.argv to avoid argparse conflicts in server/main.py
-        sys.argv = ["server/main.py", "--build"]  # Enable build mode for development
+        # Pass mode to server for builder
+        sys.argv = ["server/main.py", "--build", f"--mode={mode}"]
         from server.main import app
 
         # Create server config
@@ -158,9 +213,6 @@ def start_dev_server(port=8001, host="0.0.0.0"):
         server = uvicorn.Server(config)
 
         # Start server in background thread to show info panel
-        import threading
-        import time
-
         def run_server():
             asyncio.run(server.serve())
 

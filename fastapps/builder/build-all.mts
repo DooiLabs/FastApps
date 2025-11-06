@@ -9,6 +9,16 @@ import crypto from "crypto";
 const pkgPath = path.join(process.cwd(), "package.json");
 const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
 
+// Auto-detect and import Tailwind CSS if available
+let tailwindcss: any = null;
+try {
+  const tailwindModule = await import("@tailwindcss/vite");
+  tailwindcss = tailwindModule.default;
+  console.log("✓ Tailwind CSS detected");
+} catch (e) {
+  // Tailwind not installed, skip
+}
+
 // Find all widget directories with index.{tsx,jsx}
 const widgetDirs = fg.sync("widgets/*/", { onlyDirectories: true });
 const entries = widgetDirs.map((dir) => {
@@ -18,10 +28,20 @@ const entries = widgetDirs.map((dir) => {
 }).filter(Boolean);
 const outDir = "assets";
 
+// Determine build mode: 'hosted' (default) or 'inline'
+const modeEnv = (process.env.MODE ?? "").toLowerCase();
+const MODE: "hosted" | "inline" = modeEnv === "inline" ? "inline" : "hosted";
+
+// Global CSS that applies to all widgets
+const GLOBAL_CSS_PATH = path.resolve("widgets/index.css");
+const PER_ENTRY_CSS_GLOB = "**/*.{css,pcss,scss,sass}";
+const PER_ENTRY_CSS_IGNORE = ["**/*.module.*"];
+
 function wrapEntryPlugin(
   virtualId: string,
   entryFile: string,
-  widgetName: string
+  widgetName: string,
+  cssPaths: string[]
 ): Plugin {
   return {
     name: `virtual-entry-wrapper:${entryFile}`,
@@ -33,8 +53,14 @@ function wrapEntryPlugin(
         return null;
       }
 
+      // Import CSS files (global first, then per-entry)
+      const cssImports = cssPaths
+        .map((css) => `import ${JSON.stringify(css)};`)
+        .join("\n");
+
       // Automatically add mounting logic - no _app.jsx needed!
       return `
+    ${cssImports}
     import React from 'react';
     import { createRoot } from 'react-dom/client';
     import Component from ${JSON.stringify(entryFile)};
@@ -61,13 +87,32 @@ for (const file of entries) {
   const name = path.basename(path.dirname(file));
 
   const entryAbs = path.resolve(file);
+  const entryDir = path.dirname(entryAbs);
+
+  // Collect CSS paths: global first, then per-entry
+  const cssPaths: string[] = [];
+
+  // Add global CSS if it exists
+  if (fs.existsSync(GLOBAL_CSS_PATH)) {
+    cssPaths.push(GLOBAL_CSS_PATH);
+  }
+
+  // Add per-entry CSS
+  const perEntryCss = fg.sync(PER_ENTRY_CSS_GLOB, {
+    cwd: entryDir,
+    absolute: true,
+    dot: false,
+    ignore: PER_ENTRY_CSS_IGNORE,
+  });
+  cssPaths.push(...perEntryCss);
 
   const virtualId = `\0virtual-entry:${entryAbs}`;
 
   const createConfig = (): InlineConfig => ({
     plugins: [
-      wrapEntryPlugin(virtualId, entryAbs, name),
+      wrapEntryPlugin(virtualId, entryAbs, name, cssPaths),
       react(),
+      ...(tailwindcss ? [tailwindcss()] : []),
       {
         name: "remove-manual-chunks",
         outputOptions(options) {
@@ -143,32 +188,56 @@ console.groupEnd();
 
 console.log("new hash: ", h);
 
-for (const name of builtNames) {
-  const dir = outDir;
-  const htmlPath = path.join(dir, `${name}-${h}.html`);
-  const cssPath = path.join(dir, `${name}-${h}.css`);
-  const jsPath = path.join(dir, `${name}-${h}.js`);
+if (MODE === "inline") {
+  for (const name of builtNames) {
+    const dir = outDir;
+    const htmlPath = path.join(dir, `${name}-${h}.html`);
+    const cssPath = path.join(dir, `${name}-${h}.css`);
+    const jsPath = path.join(dir, `${name}-${h}.js`);
 
-  const css = fs.existsSync(cssPath)
-    ? fs.readFileSync(cssPath, { encoding: "utf8" })
-    : "";
-  const js = fs.existsSync(jsPath)
-    ? fs.readFileSync(jsPath, { encoding: "utf8" })
-    : "";
+    const css = fs.existsSync(cssPath)
+      ? fs.readFileSync(cssPath, { encoding: "utf8" })
+      : "";
+    const js = fs.existsSync(jsPath)
+      ? fs.readFileSync(jsPath, { encoding: "utf8" })
+      : "";
 
-  const cssBlock = css ? `\n  <style>\n${css}\n  </style>\n` : "";
-  const jsBlock = js ? `\n  <script type="module">\n${js}\n  </script>` : "";
+    const cssBlock = css ? `\n  <style>\n${css}\n  </style>\n` : "";
+    const jsBlock = js ? `\n  <script type="module">\n${js}\n  </script>` : "";
 
-  const html = [
-    "<!doctype html>",
-    "<html>",
-    `<head>${cssBlock}</head>`,
-    "<body>",
-    `  <div id="${name}-root"></div>${jsBlock}`,
-    "</body>",
-    "</html>",
-  ].join("\n");
-  fs.writeFileSync(htmlPath, html, { encoding: "utf8" });
-  console.log(`${htmlPath} (generated)`);
+    const html = [
+      "<!doctype html>",
+      "<html>",
+      `<head>${cssBlock}</head>`,
+      "<body>",
+      `  <div id="${name}-root"></div>${jsBlock}`,
+      "</body>",
+      "</html>",
+    ].join("\n");
+    fs.writeFileSync(htmlPath, html, { encoding: "utf8" });
+    console.log(`${htmlPath} (generated inline)`);
+  }
+} else {
+  const defaultBaseUrl = "http://localhost:4444";
+  const baseUrlCandidate = process.env.BASE_URL?.trim() ?? "";
+  const baseUrlRaw = baseUrlCandidate || defaultBaseUrl;
+  const normalizedBaseUrl = baseUrlRaw.replace(/\/+$/, "");
+  console.log(`Using BASE_URL: ${normalizedBaseUrl}`);
+  for (const name of builtNames) {
+    const dir = outDir;
+    const htmlPath = path.join(dir, `${name}-${h}.html`);
+    const html = `<!doctype html>
+<html>
+<head>
+  <script type="module" src="${normalizedBaseUrl}/${name}-${h}.js"></script>
+  <link rel="stylesheet" href="${normalizedBaseUrl}/${name}-${h}.css">
+</head>
+<body>
+  <div id="${name}-root"></div>
+</body>
+</html>
+`;
+    fs.writeFileSync(htmlPath, html, { encoding: "utf8" });
+    console.log(`${htmlPath} (generated with external references)`);
+  }
 }
-

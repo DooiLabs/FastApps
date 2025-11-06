@@ -71,14 +71,20 @@ parser.add_argument(
     action="store_true",
     help="Build widgets on startup (for development)"
 )
+parser.add_argument(
+    "--mode",
+    choices=["inline", "hosted"],
+    default="hosted",
+    help="Widget build mode: hosted (default) or inline"
+)
 args = parser.parse_args()
 
 # Load build results
 if args.build:
     # Build widgets on startup
-    print(f"[INFO] Building widgets")
+    print(f"[INFO] Building widgets (mode: {args.mode})")
     builder = WidgetBuilder(PROJECT_ROOT)
-    build_results = builder.build_all()
+    build_results = builder.build_all(mode=args.mode)
 else:
     # Load pre-built widgets from assets directory
     print(f"[INFO] Loading pre-built widgets from assets")

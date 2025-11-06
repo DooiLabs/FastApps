@@ -1,178 +1,19 @@
 """Create widget command."""
 
 from pathlib import Path
+import shutil
+import json
+import subprocess
 
 from rich.console import Console
 
 console = Console()
 
-
-def generate_tool_code(
-    class_name: str,
-    identifier: str,
-    title: str,
-    auth_type: str = None,
-    scopes: list = None,
-) -> str:
-    """Generate tool code with optional authentication."""
-
-    # Base imports
-    imports = "from fastapps import BaseWidget, ConfigDict"
-
-    # Add auth imports if needed
-    if auth_type == "required":
-        imports += ", auth_required, UserContext"
-    elif auth_type == "none":
-        imports += ", no_auth"
-    elif auth_type == "optional":
-        imports += ", optional_auth, UserContext"
-    else:
-        # Include commented examples
-        imports += "\n# from fastapps import auth_required, no_auth, optional_auth, UserContext"
-
-    imports += "\nfrom pydantic import BaseModel\nfrom typing import Dict, Any"
-
-    # Generate decorator
-    decorator = ""
-    if auth_type == "required":
-        scope_str = f"[{', '.join(repr(s) for s in scopes)}]" if scopes else "[]"
-        decorator = f"@auth_required(scopes={scope_str})"
-    elif auth_type == "none":
-        decorator = "@no_auth"
-    elif auth_type == "optional":
-        scope_str = f"[{', '.join(repr(s) for s in scopes)}]" if scopes else "[]"
-        decorator = f"@optional_auth(scopes={scope_str})"
-    else:
-        # Commented examples
-        decorator = """# Optional: Add authentication
-# @auth_required(scopes=["user"])
-# @no_auth
-# @optional_auth(scopes=["user"])"""
-
-    # Generate execute body based on auth type
-    if auth_type in ["required", "optional"]:
-        execute_body = """        # Access authenticated user
-        if user and user.is_authenticated:
-            return {
-                "message": f"Hello, {user.claims.get('name', 'User')}!",
-                "user_id": user.subject,
-                "scopes": user.scopes,
-            }
-
-        return {
-            "message": "Welcome to FastApps"
-        }"""
-    else:
-        execute_body = """        return {
-            "message": "Welcome to FastApps"
-        }"""
-
-    # Generate description based on auth type
-    if auth_type == "required":
-        scope_desc = f" ({', '.join(scopes)})" if scopes else ""
-        description = f"Requires authentication{scope_desc}"
-    elif auth_type == "none":
-        description = "Public widget - no authentication required"
-    elif auth_type == "optional":
-        description = "Supports both authenticated and anonymous access"
-    else:
-        description = ""
-
-    # Format description line
-    description_line = "" if not description else f'\n    description = "{description}"'
-
-    return f"""{imports}
+# Get templates directory (go up from cli/commands/ to fastapps/)
+TEMPLATES_DIR = Path(__file__).parent.parent.parent / "templates"
 
 
-class {class_name}Input(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
-
-{decorator}
-class {class_name}Tool(BaseWidget):
-    identifier = "{identifier}"
-    title = "{title}"{description_line}
-    input_schema = {class_name}Input
-    invoking = "Loading widget..."
-    invoked = "Widget ready!"
-
-    widget_csp = {{
-        "connect_domains": [],
-        "resource_domains": []
-    }}
-
-    async def execute(self, input_data: {class_name}Input, context=None, user=None) -> Dict[str, Any]:
-{execute_body}
-"""
-
-
-TOOL_TEMPLATE = """from fastapps import BaseWidget, ConfigDict
-from pydantic import BaseModel
-from typing import Dict, Any
-
-# Optional: Add per-widget authentication
-# from fastapps import auth_required, no_auth, optional_auth
-
-
-class {ClassName}Input(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
-
-# Optional: Require authentication for this widget
-# @auth_required(scopes=["user"])
-# Or make it explicitly public:
-# @no_auth
-# Or support both authenticated and anonymous:
-# @optional_auth(scopes=["user"])
-class {ClassName}Tool(BaseWidget):
-    identifier = "{identifier}"
-    title = "{title}"
-    input_schema = {ClassName}Input
-    invoking = "Loading widget..."
-    invoked = "Widget ready!"
-
-    widget_csp = {{
-        "connect_domains": [],
-        "resource_domains": []
-    }}
-
-    async def execute(self, input_data: {ClassName}Input, context=None, user=None) -> Dict[str, Any]:
-        # Access authenticated user (if present)
-        # if user and user.is_authenticated:
-        #     return {{
-        #         "message": f"Hello {{user.subject}}!",
-        #         "scopes": user.scopes,
-        #         "user_data": user.claims
-        #     }}
-
-        return {{
-            "message": "Welcome to FastApps"
-        }}
-"""
-
-WIDGET_TEMPLATE = """import React from 'react';
-import {{ useWidgetProps }} from 'fastapps';
-
-export default function {ClassName}() {{
-  const props = useWidgetProps();
-
-  return (
-    <div style={{{{
-      background: '#000',
-      color: '#fff',
-      padding: '40px',
-      textAlign: 'center',
-      borderRadius: '8px',
-      fontFamily: 'monospace'
-    }}}}>
-      <h1>{{props?.message || 'Welcome to FastApps'}}</h1>
-    </div>
-  );
-}}
-"""
-
-
-def create_widget(name: str, auth_type: str = None, scopes: list = None):
+def create_widget(name: str, auth_type: str = None, scopes: list = None, template: str = None):
     """
     Create a new widget with tool and component files.
 
@@ -180,6 +21,7 @@ def create_widget(name: str, auth_type: str = None, scopes: list = None):
         name: Widget name
         auth_type: Authentication type ('required', 'none', 'optional', or None)
         scopes: List of OAuth scopes
+        template: Template type ('list', 'carousel', 'albums', or None for default)
     """
 
     # Convert name to proper formats
@@ -209,20 +51,199 @@ def create_widget(name: str, auth_type: str = None, scopes: list = None):
     tool_dir.mkdir(parents=True, exist_ok=True)
     widget_dir.mkdir(parents=True, exist_ok=True)
 
-    # Generate files with auth configuration
-    tool_content = generate_tool_code(
-        class_name=class_name,
-        identifier=identifier,
-        title=title,
-        auth_type=auth_type,
-        scopes=scopes,
-    )
+    # Determine template to use
+    template_name = template if template else "default"
+    template_dir = TEMPLATES_DIR / template_name
 
-    widget_content = WIDGET_TEMPLATE.format(ClassName=class_name)
+    if not template_dir.exists():
+        console.print(f"[red]Template directory not found: {template_dir}[/red]")
+        return False
 
-    # Write files
-    tool_file.write_text(tool_content)
-    widget_file.write_text(widget_content)
+    # Copy and customize tool.py
+    tool_template_file = template_dir / "tool.py"
+    if tool_template_file.exists():
+        tool_content = tool_template_file.read_text()
+        tool_content = tool_content.replace("{ClassName}", class_name)
+        tool_content = tool_content.replace("{identifier}", identifier)
+        tool_content = tool_content.replace("{title}", title)
+
+        # Handle auth configuration for default template
+        if template_name == "default" and auth_type:
+            # Add auth imports and decorators
+            if auth_type == "required":
+                tool_content = tool_content.replace(
+                    "# from fastapps import auth_required, no_auth, optional_auth, UserContext",
+                    "from fastapps import auth_required, UserContext"
+                )
+                scope_str = f"[{', '.join(repr(s) for s in scopes)}]" if scopes else "[]"
+                tool_content = tool_content.replace(
+                    "# @auth_required(scopes=[\"user\"])\n# Or make it explicitly public:\n# @no_auth\n# Or support both authenticated and anonymous:\n# @optional_auth(scopes=[\"user\"])",
+                    f"@auth_required(scopes={scope_str})"
+                )
+            elif auth_type == "none":
+                tool_content = tool_content.replace(
+                    "# from fastapps import auth_required, no_auth, optional_auth, UserContext",
+                    "from fastapps import no_auth"
+                )
+                tool_content = tool_content.replace(
+                    "# @auth_required(scopes=[\"user\"])\n# Or make it explicitly public:\n# @no_auth\n# Or support both authenticated and anonymous:\n# @optional_auth(scopes=[\"user\"])",
+                    "@no_auth"
+                )
+            elif auth_type == "optional":
+                tool_content = tool_content.replace(
+                    "# from fastapps import auth_required, no_auth, optional_auth, UserContext",
+                    "from fastapps import optional_auth, UserContext"
+                )
+                scope_str = f"[{', '.join(repr(s) for s in scopes)}]" if scopes else "[]"
+                tool_content = tool_content.replace(
+                    "# @auth_required(scopes=[\"user\"])\n# Or make it explicitly public:\n# @no_auth\n# Or support both authenticated and anonymous:\n# @optional_auth(scopes=[\"user\"])",
+                    f"@optional_auth(scopes={scope_str})"
+                )
+
+        tool_file.write_text(tool_content)
+
+    # Copy widget files
+    widget_template_dir = template_dir / "widget"
+    if widget_template_dir.exists():
+        for item in widget_template_dir.iterdir():
+            if item.is_file():
+                dest_file = widget_dir / item.name
+                if item.suffix == ".jsx":
+                    # Customize .jsx files with class name
+                    content = item.read_text()
+                    content = content.replace("{ClassName}", class_name)
+                    dest_file.write_text(content)
+                else:
+                    # Copy other files as-is (like index.css)
+                    shutil.copy2(item, dest_file)
+            elif item.is_dir():
+                # Copy subdirectories (like hooks folder) recursively
+                dest_dir = widget_dir / item.name
+                shutil.copytree(item, dest_dir, dirs_exist_ok=True)
+
+    # Install additional dependencies for templates
+    if template in ["list", "carousel", "albums"]:
+        console.print(f"\n[green][OK] Widget '{name}' created from '{template}' template![/green]")
+
+        dep_name = {"list": "Tailwind CSS", "carousel": "Carousel", "albums": "Albums"}.get(template, "Template")
+        console.print(f"\n[cyan]Installing {dep_name} dependencies...[/cyan]")
+
+        # Check if package.json exists
+        package_json_path = Path("package.json")
+        if package_json_path.exists():
+            try:
+                # Read current package.json
+                with open(package_json_path, 'r') as f:
+                    package_data = json.load(f)
+
+                # Add Tailwind dependencies to devDependencies
+                if 'devDependencies' not in package_data:
+                    package_data['devDependencies'] = {}
+                if 'dependencies' not in package_data:
+                    package_data['dependencies'] = {}
+
+                # Template-specific dependencies
+                if template == "list":
+                    # Dev dependencies for list
+                    template_dev_deps = {
+                        "@tailwindcss/vite": "^4.1.11",
+                        "autoprefixer": "^10.4.21",
+                        "postcss": "^8.5.6",
+                        "tailwindcss": "^4.1.11"
+                    }
+                    # Runtime dependencies for list
+                    template_deps = {
+                        "lucide-react": "^0.552.0"
+                    }
+                elif template == "carousel":
+                    # Dev dependencies for carousel
+                    template_dev_deps = {
+                        "@tailwindcss/vite": "^4.1.11",
+                        "autoprefixer": "^10.4.21",
+                        "postcss": "^8.5.6",
+                        "tailwindcss": "^4.1.11"
+                    }
+                    # Runtime dependencies for carousel
+                    template_deps = {
+                        "lucide-react": "^0.552.0",
+                        "embla-carousel-react": "^8.6.0"
+                    }
+                elif template == "albums":
+                    # Dev dependencies for albums
+                    template_dev_deps = {
+                        "@tailwindcss/vite": "^4.1.11",
+                        "autoprefixer": "^10.4.21",
+                        "postcss": "^8.5.6",
+                        "tailwindcss": "^4.1.11"
+                    }
+                    # Runtime dependencies for albums
+                    template_deps = {
+                        "lucide-react": "^0.552.0",
+                        "embla-carousel-react": "^8.6.0"
+                    }
+                else:
+                    template_dev_deps = {}
+                    template_deps = {}
+
+                # Check if dependencies already exist
+                deps_to_install = []
+                for dep, version in template_dev_deps.items():
+                    if dep not in package_data['devDependencies']:
+                        package_data['devDependencies'][dep] = version
+                        deps_to_install.append(dep)
+
+                for dep, version in template_deps.items():
+                    if dep not in package_data['dependencies']:
+                        package_data['dependencies'][dep] = version
+                        deps_to_install.append(dep)
+
+                # Write updated package.json
+                if deps_to_install:
+                    with open(package_json_path, 'w') as f:
+                        json.dump(package_data, f, indent=2)
+
+                    dep_type = "template" if template else "Tailwind"
+                    console.print(f"[cyan]Added {len(deps_to_install)} {dep_type} dependencies to package.json[/cyan]")
+
+                    # Run npm install
+                    console.print("[cyan]Running npm install...[/cyan]")
+                    try:
+                        result = subprocess.run(
+                            ["npm", "install"],
+                            capture_output=True,
+                            text=True,
+                            check=True
+                        )
+                        success_msg = f"{dep_name} dependencies" if template in ["list", "carousel", "albums"] else "Dependencies"
+                        console.print(f"[green]✓ {success_msg} installed[/green]")
+                    except subprocess.CalledProcessError as e:
+                        console.print("[yellow]⚠ npm install failed. Run 'npm install' manually[/yellow]")
+                    except FileNotFoundError:
+                        console.print("[yellow]⚠ npm not found. Run 'npm install' manually[/yellow]")
+                else:
+                    success_msg = f"{dep_name} dependencies" if template in ["list", "carousel", "albums"] else "Dependencies"
+                    console.print(f"[green]✓ {success_msg} already installed[/green]")
+
+            except Exception as e:
+                console.print(f"[yellow]⚠ Could not update package.json: {e}[/yellow]")
+                if template in ["carousel", "albums"]:
+                    console.print(f"[yellow]Please install {template} dependencies manually:[/yellow]")
+                    console.print("[dim]  npm install embla-carousel-react lucide-react[/dim]")
+                    console.print("[dim]  npm install -D @tailwindcss/vite tailwindcss autoprefixer postcss[/dim]")
+                else:
+                    console.print("[yellow]Please install Tailwind CSS manually:[/yellow]")
+                    console.print("[dim]  npm install -D @tailwindcss/vite tailwindcss autoprefixer postcss[/dim]")
+        else:
+            console.print("[yellow]⚠ package.json not found[/yellow]")
+            if template in ["carousel", "albums"]:
+                console.print(f"[yellow]Please install {template} dependencies manually:[/yellow]")
+                console.print("[dim]  npm install embla-carousel-react lucide-react[/dim]")
+                console.print("[dim]  npm install -D @tailwindcss/vite tailwindcss autoprefixer postcss[/dim]")
+            else:
+                console.print("[yellow]Please install Tailwind CSS manually:[/yellow]")
+                console.print("[dim]  npm install -D @tailwindcss/vite tailwindcss autoprefixer postcss[/dim]")
+    else:
+        console.print(f"\n[green][OK] Widget '{name}' created![/green]")
 
     console.print("\n[green][OK] Widget created successfully![/green]")
     console.print("\n[cyan]Created files:[/cyan]")

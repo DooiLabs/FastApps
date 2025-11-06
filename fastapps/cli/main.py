@@ -50,7 +50,10 @@ def init(project_name):
 @click.option("--public", is_flag=True, help="Add no_auth decorator (public widget)")
 @click.option("--optional-auth", is_flag=True, help="Add optional_auth decorator")
 @click.option("--scopes", help="OAuth scopes (comma-separated, e.g., 'user,read:data')")
-def create(widget_name, auth, public, optional_auth, scopes):
+@click.option("--list", "use_list_template", is_flag=True, help="Create a list widget using the list template")
+@click.option("--carousel", "use_carousel_template", is_flag=True, help="Create a carousel widget using the carousel template")
+@click.option("--albums", "use_albums_template", is_flag=True, help="Create an albums widget using the albums template")
+def create(widget_name, auth, public, optional_auth, scopes, use_list_template, use_carousel_template, use_albums_template):
     """Create a new widget with tool and component files.
 
     Examples:
@@ -58,12 +61,20 @@ def create(widget_name, auth, public, optional_auth, scopes):
         fastapps create mywidget --auth --scopes user,read:data
         fastapps create mywidget --public
         fastapps create mywidget --optional-auth --scopes user
+        fastapps create mywidget --list
+        fastapps create mywidget --carousel
+        fastapps create mywidget --albums
 
     Authentication options:
         --auth: Require OAuth authentication
         --public: Mark as public (no auth)
         --optional-auth: Support both authenticated and anonymous
         --scopes: OAuth scopes to require
+
+    Template options:
+        --list: Use the list widget template (includes Tailwind CSS styling)
+        --carousel: Use the carousel widget template (includes Embla Carousel)
+        --albums: Use the albums widget template (includes fullscreen photo viewer)
     """
     # Parse scopes
     scope_list = scopes.split(",") if scopes else None
@@ -85,7 +96,24 @@ def create(widget_name, auth, public, optional_auth, scopes):
     elif optional_auth:
         auth_type = "optional"
 
-    create_widget(widget_name, auth_type=auth_type, scopes=scope_list)
+    # Validate template options
+    template_count = sum([use_list_template, use_carousel_template, use_albums_template])
+    if template_count > 1:
+        console.print(
+            "[red]Error: Only one template option allowed (--list, --carousel, or --albums)[/red]"
+        )
+        return
+
+    # Determine template
+    template = None
+    if use_list_template:
+        template = "list"
+    elif use_carousel_template:
+        template = "carousel"
+    elif use_albums_template:
+        template = "albums"
+
+    create_widget(widget_name, auth_type=auth_type, scopes=scope_list, template=template)
 
 
 @cli.command()
@@ -93,23 +121,34 @@ def create(widget_name, auth, public, optional_auth, scopes):
 @click.option(
     "--host", default="0.0.0.0", help="Host to bind the server to (default: 0.0.0.0)"
 )
-def dev(port, host):
+@click.option(
+    "--mode",
+    type=click.Choice(['inline', 'hosted'], case_sensitive=False),
+    default='hosted',
+    help="Widget build mode: 'hosted' (default, external JS/CSS on port 4444) or 'inline' (self-contained HTML)"
+)
+def dev(port, host, mode):
     """Start development server with Cloudflare Tunnel.
 
     This command will:
-    1. Build widgets
+    1. Build widgets (inline or hosted mode)
     2. Install cloudflared if needed (automatic, no token required)
     3. Start a public Cloudflare Tunnel
     4. Launch the FastApps development server
     5. Display public and local URLs
 
-    Example:
-        fastapps dev
-        fastapps dev --port 8080
+    Build modes:
+      --mode=hosted   : Widgets reference external JS/CSS from localhost:4444 (default, faster dev, ChatGPT compatible)
+      --mode=inline   : Widgets built as self-contained HTML (production-ready)
+
+    Examples:
+        fastapps dev                    # Hosted mode (default)
+        fastapps dev --mode=inline      # Inline mode (self-contained)
+        fastapps dev --port 8080        # Custom port
 
     Note: Uses Cloudflare Tunnel (free, unlimited, no sign-up required)
     """
-    start_dev_server(port=port, host=host)
+    start_dev_server(port=port, host=host, mode=mode)
 
 
 @cli.command()
