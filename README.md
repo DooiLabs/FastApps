@@ -2,7 +2,7 @@
 <img src="https://github.com/user-attachments/assets/c8766217-427f-4566-8dcb-480f8db12352" width="100%" />
 
 <p align="center">
-  <strong>The python framework for ChatGPT apps</strong>
+  <strong>The python framework for apps in ChatGPT</strong>
 </p>
 
 <p align="center">
