@@ -249,35 +249,11 @@ def create_widget(name: str, auth_type: str = None, scopes: list = None, templat
     console.print("\n[cyan]Created files:[/cyan]")
     console.print(f"  - {tool_file}")
     console.print(f"  - {widget_file}")
-
-    # Show auth status
-    if auth_type == "required":
-        scope_str = f" with scopes: {', '.join(scopes)}" if scopes else ""
-        console.print(f"\n[yellow]🔒 Authentication: Required{scope_str}[/yellow]")
-    elif auth_type == "none":
-        console.print("\n[yellow]🌐 Authentication: Public (no auth)[/yellow]")
-    elif auth_type == "optional":
-        scope_str = f" (scopes: {', '.join(scopes)})" if scopes else ""
-        console.print(f"\n[yellow]🔓 Authentication: Optional{scope_str}[/yellow]")
-    else:
-        console.print(
-            "\n[yellow]ℹ️  Authentication: Not configured (will inherit from server)[/yellow]"
-        )
-
     console.print("\n[yellow]Next steps:[/yellow]")
-    console.print("  1. npm run build")
-    console.print("  2. python server/main.py")
+    console.print("  1. fastapps dev")
     console.print(
         "\n[green]Your widget will be automatically discovered by FastApps![/green]"
     )
-
-    if not auth_type:
-        console.print(
-            "\n[dim]Tip: Use --auth, --public, or --optional-auth flags for authentication[/dim]"
-        )
-        console.print(
-            f"[dim]Example: fastapps create {name} --auth --scopes user,read:data[/dim]"
-        )
 
     console.print()
 
