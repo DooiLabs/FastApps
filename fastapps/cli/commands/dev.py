@@ -237,7 +237,7 @@ def start_dev_server(port=8001, host="0.0.0.0", mode="hosted"):
         # Display MCP endpoint info
         mcp_panel = Panel(
             f"[bold]MCP Server Endpoint:[/bold]\n"
-            f"[green]{public_url}[/green]\n\n"
+            f"[green]{public_url}/mcp[/green]\n\n"
             f"[dim]Use this URL in your MCP client configuration[/dim]",
             title="Model Context Protocol",
             border_style="blue",
