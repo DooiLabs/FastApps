@@ -14,20 +14,19 @@ Black is the uncompromising Python code formatter. It reformats entire files in 
 
 **Installation**:
 ```bash
-pip install black
-# Or with uv: uv pip install black
+uv pip install black
 ```
 
 **Usage**:
 ```bash
 # Format all files
-black .
+uv run black .
 
 # Check formatting without changing files
-black --check .
+uv run black --check .
 
 # Format specific file
-black path/to/file.py
+uv run black path/to/file.py
 ```
 
 **Configuration** (`pyproject.toml`):
@@ -59,20 +58,19 @@ Ruff is an extremely fast Python linter that replaces multiple tools (Flake8, is
 
 **Installation**:
 ```bash
-pip install ruff
-# Or with uv: uv pip install ruff
+uv pip install ruff
 ```
 
 **Usage**:
 ```bash
 # Lint all files
-ruff check .
+uv run ruff check .
 
 # Auto-fix issues
-ruff check --fix .
+uv run ruff check --fix .
 
 # Lint specific file
-ruff check path/to/file.py
+uv run ruff check path/to/file.py
 ```
 
 **Configuration** (`pyproject.toml`):
@@ -342,22 +340,22 @@ Our CI pipeline automatically checks:
 
 1. **Black formatting**:
    ```bash
-   black --check .
+   uv run black --check .
    ```
 
 2. **Ruff linting**:
    ```bash
-   ruff check .
+   uv run ruff check .
    ```
 
 3. **Tests**:
    ```bash
-   pytest --cov=fastapps
+   uv run pytest --cov=fastapps
    ```
 
 4. **Type checking** (optional):
    ```bash
-   mypy fastapps --ignore-missing-imports
+   uv run mypy fastapps --ignore-missing-imports
    ```
 
 5. **Build validation**:
@@ -371,9 +369,8 @@ Our CI pipeline automatically checks:
 Install pre-commit hooks to automatically format/lint before commits:
 
 ```bash
-pip install pre-commit
-# Or with uv: uv pip install pre-commit
-pre-commit install
+uv pip install pre-commit
+uv run pre-commit install
 ```
 
 `.pre-commit-config.yaml`:
@@ -415,7 +412,7 @@ repos:
 ### PyCharm
 
 1. **Black**:
-   - Install Black: `pip install black` or `uv pip install black`
+   - Install Black: `uv pip install black`
    - Settings → Tools → Black → Enable
    - Settings → Tools → Actions on Save → Run Black
 
@@ -429,16 +426,16 @@ repos:
 
 ```bash
 # 1. Format code
-black .
+uv run black .
 
 # 2. Lint and auto-fix
-ruff check --fix .
+uv run ruff check --fix .
 
 # 3. Run tests
-pytest
+uv run pytest
 
 # 4. Check coverage
-pytest --cov=fastapps --cov-report=term
+uv run pytest --cov=fastapps --cov-report=term
 ```
 
 ### Common Issues
@@ -446,22 +443,22 @@ pytest --cov=fastapps --cov-report=term
 **"Black would reformat"**:
 ```bash
 # Fix: Run Black
-black .
+uv run black .
 ```
 
 **"Ruff found issues"**:
 ```bash
 # Try auto-fix first
-ruff check --fix .
+uv run ruff check --fix .
 
 # Then check remaining issues
-ruff check .
+uv run ruff check .
 ```
 
 **"Import sorting"**:
 ```bash
 # Ruff handles this automatically
-ruff check --fix .
+uv run ruff check --fix .
 ```
 
 ## Resources

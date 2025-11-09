@@ -28,7 +28,8 @@ def cli():
 
 @cli.command()
 @click.argument("project_name")
-def init(project_name):
+@click.option("--python", help="Python version requirement (e.g., 3.8, 3.9)")
+def init(project_name, python):
     """Initialize a new FastApps project.
 
     Example:
@@ -38,10 +39,13 @@ def init(project_name):
     - server/main.py (auto-discovery)
     - server/tools/ (for widget backends)
     - widgets/ (for React components)
-    - requirements.txt
+    - pyproject.toml (Python dependencies)
     - package.json
+
+    Options:
+        --python: Set Python version requirement (e.g., 3.8, 3.9)
     """
-    init_project(project_name)
+    init_project(project_name, python)
 
 
 @cli.command()
@@ -208,6 +212,10 @@ def auth_info():
 @click.argument("integration_name")
 def use(integration_name):
     """Add integrations to your FastApps project.
+
+    Notes:
+        • Run this from a FastApps project root containing pyproject.toml
+        • Manage Python dependencies with uv (`uv add ...` followed by `uv sync`)
 
     Available integrations:
         metorial - Add Metorial MCP integration for querying data sources

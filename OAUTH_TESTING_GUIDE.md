@@ -89,15 +89,13 @@ python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install FastApps
-pip install -e ../FastApps
-# Or with uv: uv pip install -e ../FastApps
+uv pip install -e ../FastApps
 
 # Install dependencies
-pip install httpx PyJWT cryptography
-# Or with uv: uv pip install httpx PyJWT cryptography
+uv pip install httpx PyJWT cryptography
 
 # Initialize project
-fastapps init auth-test-project
+uv run fastapps init auth-test-project
 cd auth-test-project
 
 # Install JS dependencies
@@ -111,7 +109,7 @@ Create three test widgets to test all decorator types:
 #### 1. Protected Widget (auth required)
 
 ```bash
-fastapps create protected-widget
+uv run fastapps create protected-widget
 ```
 
 Edit `server/tools/protected_widget_tool.py`:
@@ -157,7 +155,7 @@ class ProtectedWidgetTool(BaseWidget):
 #### 2. Public Widget (no auth)
 
 ```bash
-fastapps create public-widget
+uv run fastapps create public-widget
 ```
 
 Edit `server/tools/public_widget_tool.py`:
@@ -194,7 +192,7 @@ class PublicWidgetTool(BaseWidget):
 #### 3. Flexible Widget (optional auth)
 
 ```bash
-fastapps create flexible-widget
+uv run fastapps create flexible-widget
 ```
 
 Edit `server/tools/flexible_widget_tool.py`:
@@ -601,4 +599,3 @@ rm -rf auth-test
 - Server logs: Terminal 1
 - ChatGPT connector status: Settings → Connectors
 - FastApps docs: `/docs/08-AUTH.md` and `/docs/09-PER-WIDGET-AUTH.md`
-

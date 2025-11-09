@@ -4,7 +4,7 @@ FastApps now includes built-in ngrok integration for easy development server acc
 
 ## What's New
 
-The `fastapps dev` command now:
+The `uv run fastapps dev` command now:
 - ✅ Automatically creates a public ngrok tunnel
 - ✅ Manages your ngrok auth token securely
 - ✅ Displays both local and public URLs
@@ -15,8 +15,7 @@ The `fastapps dev` command now:
 
 1. **Install dependencies:**
    ```bash
-   pip install -e .
-   # Or with uv: uv sync --dev
+   uv sync --dev
    ```
    This will install pyngrok and all other required dependencies.
 
@@ -31,7 +30,7 @@ The `fastapps dev` command now:
 
 Start the development server with ngrok:
 ```bash
-fastapps dev
+uv run fastapps dev
 ```
 
 On first run, you'll be prompted for your ngrok auth token:
@@ -73,17 +72,17 @@ After starting, you'll see:
 
 Specify custom port:
 ```bash
-fastapps dev --port 8080
+uv run fastapps dev --port 8080
 ```
 
 Specify custom host:
 ```bash
-fastapps dev --host 127.0.0.1 --port 9000
+uv run fastapps dev --host 127.0.0.1 --port 9000
 ```
 
 View help:
 ```bash
-fastapps dev --help
+uv run fastapps dev --help
 ```
 
 ## Managing ngrok Token
@@ -92,10 +91,10 @@ fastapps dev --help
 
 If you want to change your ngrok token:
 ```bash
-fastapps reset-token
+uv run fastapps reset-token
 ```
 
-This will clear the stored token. The next time you run `fastapps dev`, you'll be prompted for a new token.
+This will clear the stored token. The next time you run `uv run fastapps dev`, you'll be prompted for a new token.
 
 ### Manual Configuration
 
@@ -112,36 +111,34 @@ Alternatively, you can manually edit `~/.fastapps/config.json`:
 
 Install pyngrok:
 ```bash
-pip install pyngrok
-# Or with uv: uv pip install pyngrok
+uv pip install pyngrok
 ```
 
 Or reinstall FastApps with all dependencies:
 ```bash
-pip install -e .
-# Or with uv: uv sync --dev
+uv sync --dev
 ```
 
 ### "Not in a FastApps project directory" Error
 
-Make sure you run `fastapps dev` from your project root directory (where `server/main.py` exists).
+Make sure you run `uv run fastapps dev` from your project root directory (where `server/main.py` exists).
 
 If you haven't initialized a project yet:
 ```bash
-fastapps init myproject
+uv run fastapps init myproject
 cd myproject
-pip install -r requirements.txt
-# Or with uv: uv pip install -r requirements.txt
+uv sync
+# Or: uv sync --dev (installs dev extras)
 npm install
-fastapps create mywidget
+uv run fastapps create mywidget
 npm run build
-fastapps dev
+uv run fastapps dev
 ```
 
 ### ngrok Connection Issues
 
 1. **Check your auth token** - Make sure it's valid at https://dashboard.ngrok.com
-2. **Reset token** - Run `fastapps reset-token` and try again
+2. **Reset token** - Run `uv run fastapps reset-token` and try again
 3. **Check firewall** - Ensure your firewall allows ngrok connections
 4. **Free account limits** - Free ngrok accounts have connection limits
 
@@ -149,7 +146,7 @@ fastapps dev
 
 If port 8001 is already in use:
 ```bash
-fastapps dev --port 8002
+uv run fastapps dev --port 8002
 ```
 
 ## How It Works
@@ -171,11 +168,11 @@ fastapps dev --port 8002
 
 | Command | Description |
 |---------|-------------|
-| `fastapps dev` | Start dev server with ngrok tunnel |
-| `fastapps dev --port 8080` | Start on custom port |
-| `fastapps dev --host 127.0.0.1` | Start on custom host |
-| `fastapps reset-token` | Clear stored ngrok token |
-| `fastapps dev --help` | Show help for dev command |
+| `uv run fastapps dev` | Start dev server with ngrok tunnel |
+| `uv run fastapps dev --port 8080` | Start on custom port |
+| `uv run fastapps dev --host 127.0.0.1` | Start on custom host |
+| `uv run fastapps reset-token` | Clear stored ngrok token |
+| `uv run fastapps dev --help` | Show help for dev command |
 
 ## Security Notes
 
