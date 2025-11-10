@@ -81,9 +81,9 @@ FastApps provides pre-built templates to jumpstart your widget development:
 
 ```bash
 # Create widget from a template
-fastapps create my-list --list          # Vertical list with items
-fastapps create my-carousel --carousel  # Horizontal scrolling cards
-fastapps create my-albums --albums      # Photo gallery viewer
+fastapps create my-list --template list          # Vertical list with items
+fastapps create my-carousel --template carousel  # Horizontal scrolling cards
+fastapps create my-albums --template albums      # Photo gallery viewer
 ```
 
 
