@@ -159,6 +159,12 @@ export default function MyWidget() {
 
 ---
 
+## Examples
+
+- `examples/pizzaz` – port of the OpenAI Apps SDK “Pizzaz” gallery built with FastApps (multiple widgets, Tailwind styling). See the example README for setup instructions.
+
+---
+
 ## Contributing
 
 We welcome contributions! Please see our contributing guidelines:
