@@ -53,12 +53,18 @@ class WidgetBuilder:
         npx_cmd = "npx.cmd" if platform.system() == "Windows" else "npx"
         build_script = "build-all.mts"
 
-        # Pass mode and BASE_URL (for hosted) via environment
+        # Pass mode and asset URLs via environment
         env = os.environ.copy()
         # Explicit mode for the script
         env["MODE"] = mode
         if mode == "hosted":
-            env["BASE_URL"] = env.get("BASE_URL", "http://localhost:4444")
+            # Use PUBLIC_URL if available (for absolute URLs in iframes)
+            # Otherwise fall back to relative /assets path
+            public_url = env.get("PUBLIC_URL", "")
+            if public_url:
+                env["BASE_URL"] = f"{public_url}/assets"
+            else:
+                env["BASE_URL"] = "/assets"
 
         subprocess.run(
             [npx_cmd, "tsx", build_script],

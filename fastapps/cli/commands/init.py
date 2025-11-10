@@ -93,8 +93,29 @@ else:
 # Auto-load and register tools
 tools = auto_load_tools(build_results)
 
-# Create MCP server
-server = WidgetMCPServer(name="my-widgets", widgets=tools)
+# Load CSP configuration from fastapps.json
+def load_csp_config():
+    \"\"\"Load CSP configuration from fastapps.json if exists.\"\"\"
+    config_file = PROJECT_ROOT / "fastapps.json"
+    if config_file.exists():
+        try:
+            import json
+            with open(config_file, "r") as f:
+                config = json.load(f)
+                return config.get("csp", {})
+        except Exception as e:
+            print(f"[WARNING] Could not load CSP config: {e}")
+    return {}
+
+csp_config = load_csp_config()
+
+# Create MCP server with CSP configuration
+server = WidgetMCPServer(
+    name="my-widgets",
+    widgets=tools,
+    global_resource_domains=csp_config.get("resource_domains", []),
+    global_connect_domains=csp_config.get("connect_domains", []),
+)
 
 # Optional: Enable OAuth 2.1 authentication
 # Uncomment and configure to protect your widgets with OAuth:
@@ -197,6 +218,25 @@ This project uses `uv` for Python dependency management:
 - `uv add <package>` - Add a new dependency
 - `uv add --dev <package>` - Add a development dependency
 - `uv run <command>` - Run commands in the project environment
+## Content Security Policy (CSP)
+
+Your project includes a default CSP configuration in `fastapps.json` that allows loading images from a safe public CDN. You can manage CSP domains using the CLI:
+
+```bash
+# Add external resource domains (images, fonts, styles)
+fastapps csp add --url https://your-cdn.com --type resource
+
+# Add API domains (fetch, XHR)
+fastapps csp add --url https://api.example.com --type connect
+
+# List all configured domains
+fastapps csp list
+
+# Remove a domain
+fastapps csp remove --url https://example.com --type resource
+```
+
+The default domain (`https://pub-d9760dbd87764044a85486be2fdf7f9f.r2.dev`) is a safe public CDN used by example widgets. You can remove it if not needed.
 
 ## Learn More
 
@@ -328,6 +368,21 @@ def init_project(project_name: str, python_version: str = None):
         # Create .gitignore
         console.print("Creating .gitignore...")
         (project_path / ".gitignore").write_text(GITIGNORE)
+
+        # Create fastapps.json with default CSP
+        console.print("Creating fastapps.json...")
+        import json
+        fastapps_config = {
+            "csp": {
+                "resource_domains": [
+                    "https://pub-d9760dbd87764044a85486be2fdf7f9f.r2.dev"
+                ],
+                "connect_domains": []
+            }
+        }
+        (project_path / "fastapps.json").write_text(
+            json.dumps(fastapps_config, indent=2)
+        )
 
         console.print(
             f"\n[green][OK] Project '{project_name}' created successfully![/green]"

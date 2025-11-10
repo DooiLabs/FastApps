@@ -5,6 +5,7 @@ from rich.console import Console
 
 from fastapps.core.utils import get_cli_version
 
+from .commands.allow_csp import add_csp_domain, list_csp_domains, remove_csp_domain
 from .commands.build import build_command
 from .commands.cloud import cloud
 from .commands.create import create_widget
@@ -54,10 +55,8 @@ def init(project_name, python):
 @click.option("--public", is_flag=True, help="Add no_auth decorator (public widget)")
 @click.option("--optional-auth", is_flag=True, help="Add optional_auth decorator")
 @click.option("--scopes", help="OAuth scopes (comma-separated, e.g., 'user,read:data')")
-@click.option("--list", "use_list_template", is_flag=True, help="Create a list widget using the list template")
-@click.option("--carousel", "use_carousel_template", is_flag=True, help="Create a carousel widget using the carousel template")
-@click.option("--albums", "use_albums_template", is_flag=True, help="Create an albums widget using the albums template")
-def create(widget_name, auth, public, optional_auth, scopes, use_list_template, use_carousel_template, use_albums_template):
+@click.option("--template", type=click.Choice(['list', 'carousel', 'albums'], case_sensitive=False), help="Widget template to use (list, carousel, or albums)")
+def create(widget_name, auth, public, optional_auth, scopes, template):
     """Create a new widget with tool and component files.
 
     Examples:
@@ -65,9 +64,9 @@ def create(widget_name, auth, public, optional_auth, scopes, use_list_template, 
         fastapps create mywidget --auth --scopes user,read:data
         fastapps create mywidget --public
         fastapps create mywidget --optional-auth --scopes user
-        fastapps create mywidget --list
-        fastapps create mywidget --carousel
-        fastapps create mywidget --albums
+        fastapps create mywidget --template list
+        fastapps create mywidget --template carousel
+        fastapps create mywidget --template albums
 
     Authentication options:
         --auth: Require OAuth authentication
@@ -76,9 +75,9 @@ def create(widget_name, auth, public, optional_auth, scopes, use_list_template, 
         --scopes: OAuth scopes to require
 
     Template options:
-        --list: Use the list widget template (includes Tailwind CSS styling)
-        --carousel: Use the carousel widget template (includes Embla Carousel)
-        --albums: Use the albums widget template (includes fullscreen photo viewer)
+        --template list: Use the list widget template (includes Tailwind CSS styling)
+        --template carousel: Use the carousel widget template (includes Embla Carousel)
+        --template albums: Use the albums widget template (includes fullscreen photo viewer)
     """
     # Parse scopes
     scope_list = scopes.split(",") if scopes else None
@@ -99,23 +98,6 @@ def create(widget_name, auth, public, optional_auth, scopes, use_list_template, 
         auth_type = "none"
     elif optional_auth:
         auth_type = "optional"
-
-    # Validate template options
-    template_count = sum([use_list_template, use_carousel_template, use_albums_template])
-    if template_count > 1:
-        console.print(
-            "[red]Error: Only one template option allowed (--list, --carousel, or --albums)[/red]"
-        )
-        return
-
-    # Determine template
-    template = None
-    if use_list_template:
-        template = "list"
-    elif use_carousel_template:
-        template = "carousel"
-    elif use_albums_template:
-        template = "albums"
 
     create_widget(widget_name, auth_type=auth_type, scopes=scope_list, template=template)
 
@@ -226,6 +208,71 @@ def use(integration_name):
     This will create server/api/metorial_mcp.py with environment variable support.
     """
     use_integration(integration_name)
+
+
+# CSP management command group
+@cli.group()
+def csp():
+    """Manage Content Security Policy (CSP) for widgets.
+
+    Configure domains allowed to load external resources (scripts, styles, images)
+    and make API calls (fetch, XHR) from your widgets.
+
+    All CSP configuration is stored in fastapps.json and automatically
+    loaded when creating WidgetMCPServer.
+    """
+    pass
+
+
+@csp.command("add")
+@click.option("--url", help="Domain URL to allow (e.g., https://example.com)")
+@click.option(
+    "--type",
+    "domain_type",
+    type=click.Choice(["resource", "connect"], case_sensitive=False),
+    help="Domain type: 'resource' for assets, 'connect' for APIs",
+)
+def csp_add(url, domain_type):
+    """Add a domain to CSP allowlist.
+
+    Examples:
+        fastapps csp add --url https://pub-YOUR-ID.r2.dev --type resource
+        fastapps csp add --url https://api.example.com --type connect
+        fastapps csp add  # Interactive mode
+
+    Domain types:
+        resource - For scripts, styles, images, fonts (e.g., CDN, R2 buckets)
+        connect  - For API calls via fetch/XHR (e.g., external APIs)
+    """
+    add_csp_domain(url=url, domain_type=domain_type)
+
+
+@csp.command("remove")
+@click.option("--url", help="Domain URL to remove")
+@click.option(
+    "--type",
+    "domain_type",
+    type=click.Choice(["resource", "connect"], case_sensitive=False),
+    help="Domain type: 'resource' or 'connect'",
+)
+def csp_remove(url, domain_type):
+    """Remove a domain from CSP allowlist.
+
+    Examples:
+        fastapps csp remove --url https://example.com --type resource
+        fastapps csp remove  # Interactive mode
+    """
+    remove_csp_domain(url=url, domain_type=domain_type)
+
+
+@csp.command("list")
+def csp_list():
+    """List all configured CSP domains.
+
+    Shows currently configured resource and connect domains
+    from fastapps.json.
+    """
+    list_csp_domains()
 
 
 if __name__ == "__main__":

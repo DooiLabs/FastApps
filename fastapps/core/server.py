@@ -37,9 +37,12 @@ class WidgetMCPServer:
         auth_required_scopes: Optional[List[str]] = None,
         auth_audience: Optional[str] = None,
         token_verifier: Optional["TokenVerifier"] = None,
+        # Global CSP configuration for all widgets (optional)
+        global_resource_domains: Optional[List[str]] = None,
+        global_connect_domains: Optional[List[str]] = None,
     ):
         """
-        Initialize MCP server with optional OAuth authentication.
+        Initialize MCP server with optional OAuth authentication and global CSP.
 
         Args:
             name: Server name
@@ -49,6 +52,8 @@ class WidgetMCPServer:
             auth_required_scopes: Required OAuth scopes (e.g., ["user", "read:data"])
             auth_audience: JWT audience claim (optional)
             token_verifier: Custom TokenVerifier (optional, uses JWTVerifier if not provided)
+            global_resource_domains: Domains to allow for all widgets (scripts, styles, images)
+            global_connect_domains: Domains to allow for API calls (fetch, XHR)
 
         Example (Simple):
             server = WidgetMCPServer(
@@ -57,6 +62,19 @@ class WidgetMCPServer:
                 auth_issuer_url="https://tenant.auth0.com",
                 auth_resource_server_url="https://example.com/mcp",
                 auth_required_scopes=["user"],
+            )
+
+        Example (With Global CSP):
+            server = WidgetMCPServer(
+                name="my-widgets",
+                widgets=tools,
+                global_resource_domains=[
+                    "https://pub-YOUR-BUCKET-ID.r2.dev",  # R2 images
+                    "https://fonts.googleapis.com",       # Google Fonts
+                ],
+                global_connect_domains=[
+                    "https://api.example.com",  # External API
+                ],
             )
 
         Example (Custom Verifier):
@@ -71,6 +89,13 @@ class WidgetMCPServer:
         self.widgets_by_id = {w.identifier: w for w in widgets}
         self.widgets_by_uri = {w.template_uri: w for w in widgets}
         self.client_locale: Optional[str] = None
+
+        # Store global CSP configuration
+        self.global_resource_domains = global_resource_domains or []
+        self.global_connect_domains = global_connect_domains or []
+
+        # Auto-configure widget CSP based on PUBLIC_URL and global settings
+        self._configure_widget_csp(widgets)
 
         # Store server auth configuration for per-widget inheritance
         self.server_requires_auth = bool(auth_issuer_url and auth_resource_server_url)
@@ -120,6 +145,48 @@ class WidgetMCPServer:
             self.mcp = FastMCP(name=name)
 
         self._register_handlers()
+
+    def _configure_widget_csp(self, widgets: List[BaseWidget]):
+        """
+        Auto-configure widget CSP based on:
+        1. PUBLIC_URL environment variable
+        2. Global CSP domains (global_resource_domains, global_connect_domains)
+        3. Widget-specific CSP (widget.widget_csp)
+        """
+        import os
+
+        public_url = os.environ.get("PUBLIC_URL", "").strip()
+
+        # Configure CSP for all widgets
+        for widget in widgets:
+            # Initialize CSP if not present
+            if widget.widget_csp is None:
+                widget.widget_csp = {
+                    "resource_domains": [],
+                    "connect_domains": []
+                }
+
+            # Get existing domains
+            resource_domains = widget.widget_csp.get("resource_domains", [])
+            connect_domains = widget.widget_csp.get("connect_domains", [])
+
+            # Merge PUBLIC_URL
+            if public_url and public_url not in resource_domains:
+                resource_domains.append(public_url)
+
+            # Merge global resource domains
+            for domain in self.global_resource_domains:
+                if domain not in resource_domains:
+                    resource_domains.append(domain)
+
+            # Merge global connect domains
+            for domain in self.global_connect_domains:
+                if domain not in connect_domains:
+                    connect_domains.append(domain)
+
+            # Update widget CSP
+            widget.widget_csp["resource_domains"] = resource_domains
+            widget.widget_csp["connect_domains"] = connect_domains
 
     def _register_handlers(self):
         """Register all MCP handlers for widget support."""
@@ -186,17 +253,19 @@ class WidgetMCPServer:
 
         @server.list_resources()
         async def list_resources_handler() -> List[types.Resource]:
-            return [
-                types.Resource(
+            resources = []
+            for w in self.widgets_by_id.values():
+                meta = w.get_resource_meta()
+                resource = types.Resource(
                     name=w.title,
                     title=w.title,
                     uri=w.template_uri,
                     description=f"{w.title} widget markup",
                     mimeType="text/html+skybridge",
-                    _meta=w.get_resource_meta(),
+                    _meta=meta,
                 )
-                for w in self.widgets_by_id.values()
-            ]
+                resources.append(resource)
+            return resources
 
         @server.list_resource_templates()
         async def list_resource_templates_handler() -> List[types.ResourceTemplate]:
@@ -357,7 +426,7 @@ class WidgetMCPServer:
         server.request_handlers[types.CallToolRequest] = call_tool_handler
 
     def get_app(self):
-        """Get FastAPI app with CORS enabled."""
+        """Get FastAPI app with CORS enabled and /assets proxy."""
         app = self.mcp.http_app()
 
         try:
@@ -371,6 +440,64 @@ class WidgetMCPServer:
                 allow_credentials=False,
             )
         except Exception:
+            pass
+
+        # Add /assets proxy route to forward requests to local asset server
+        # This eliminates CORS/PNA/mixed content issues by serving assets from the same origin
+        try:
+            import httpx
+            from starlette.responses import Response
+            from starlette.routing import Route
+
+            async def proxy_assets(request):
+                """Proxy asset requests to local asset server (port 4444)."""
+                # Extract path from request
+                path = request.path_params.get('path', '')
+                upstream_url = f"http://127.0.0.1:4444/{path}"
+
+                try:
+                    async with httpx.AsyncClient(timeout=30.0) as client:
+                        # Forward the request to the asset server
+                        upstream_response = await client.get(upstream_url)
+
+                        # Filter headers to only include content-related ones
+                        allowed_headers = {
+                            "content-type", "cache-control", "etag",
+                            "last-modified", "content-length"
+                        }
+                        response_headers = {
+                            k: v for k, v in upstream_response.headers.items()
+                            if k.lower() in allowed_headers
+                        }
+
+                        # Ensure content-type is set
+                        if "content-type" not in response_headers:
+                            response_headers["content-type"] = "application/octet-stream"
+
+                        # Add CORS headers for cross-origin access
+                        response_headers["access-control-allow-origin"] = "*"
+                        response_headers["access-control-allow-methods"] = "GET, OPTIONS"
+                        response_headers["access-control-allow-headers"] = "*"
+
+                        return Response(
+                            content=upstream_response.content,
+                            status_code=upstream_response.status_code,
+                            headers=response_headers
+                        )
+                except httpx.RequestError:
+                    return Response(
+                        content=b"Asset server unavailable",
+                        status_code=502,
+                        headers={"content-type": "text/plain"}
+                    )
+
+            # Add route to Starlette app
+            app.routes.append(
+                Route("/assets/{path:path}", proxy_assets, methods=["GET"])
+            )
+        except Exception as e:
+            # Log error but don't crash
+            print(f"Warning: Could not register /assets proxy route: {e}")
             pass
 
         return app

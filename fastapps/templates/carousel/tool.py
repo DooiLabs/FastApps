@@ -20,6 +20,13 @@ class {ClassName}Tool(BaseWidget):
     invoked = "Carousel ready!"
     input_schema = {ClassName}Input
 
+    # Optional: Configure widget-specific CSP (if needed)
+    # For project-wide domains, use global_resource_domains in WidgetMCPServer instead
+    # widget_csp = {
+    #     "resource_domains": ["https://example.com"],
+    #     "connect_domains": []
+    # }
+
     async def execute(self, input_data: {ClassName}Input, context=None, user=None):
         # Example: Return sample cards for carousel
         return {
