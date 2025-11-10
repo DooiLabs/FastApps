@@ -131,15 +131,28 @@ def start_asset_server(assets_dir: Path, port: int = 4444):
         def end_headers(self):
             self.send_header('Access-Control-Allow-Origin', '*')
             self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
-            self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+            self.send_header('Access-Control-Allow-Headers', '*')
+            self.send_header('Cache-Control', 'no-cache')
             super().end_headers()
+
+        def do_OPTIONS(self):
+            self.send_response(200)
+            self.end_headers()
 
         def log_message(self, format, *args):
             # Suppress request logs to keep output clean
             pass
 
     handler = CORSHTTPRequestHandler
-    with socketserver.TCPServer(("", port), handler) as httpd:
+
+    # Use ThreadingTCPServer for concurrent requests
+    class ThreadedAssetServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+        # Allow socket reuse to prevent "Address already in use" errors
+        allow_reuse_address = True
+        # Set daemon threads so server shuts down cleanly
+        daemon_threads = True
+
+    with ThreadedAssetServer(("", port), handler) as httpd:
         console.print(f"[green]✓ Asset server running on http://localhost:{port}[/green]")
         httpd.serve_forever()
 
@@ -193,6 +206,9 @@ def start_dev_server(port=8001, host="0.0.0.0", mode="hosted"):
         return False
 
     console.print()
+
+    # Set PUBLIC_URL environment variable for builder
+    os.environ["PUBLIC_URL"] = public_url
 
     # Import and start server (shows uvicorn boot logs first)
     console.print("[cyan]Starting FastApps server...[/cyan]\n")
