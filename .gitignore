@@ -8,5 +8,4 @@
 # Deployment artifacts
 .fastapps-deploy-*.tar.gz
 
-# examples will be uploaded soon
-examples/
+# (examples subdir now tracked; keep ignoring per-example build artifacts via nested .gitignore)
