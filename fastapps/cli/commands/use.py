@@ -1,13 +1,18 @@
 """Use command - Add integrations to FastApps projects."""
 
+import subprocess
 from pathlib import Path
 
 from rich.console import Console
 
+from fastapps.cli import utils as cli_utils
+from fastapps.core import utils as core_utils
+
 console = Console()
+METORIAL_DEPENDENCIES = ["metorial", "openai"]
 
 
-METORIAL_TEMPLATE = '''import os
+METORIAL_TEMPLATE = """import os
 from metorial import Metorial
 from openai import AsyncOpenAI
 
@@ -37,22 +42,36 @@ async def call_metorial(
     )
 
     return response.text
-'''
+"""
 
 
 def use_metorial():
     """Add Metorial MCP integration to the project."""
 
+    project_root = Path.cwd()
+
     # Check if we're in a FastApps project
-    if not Path("server").exists():
+    if not (project_root / "server").exists():
         console.print("[red]Error: Not in a FastApps project directory.[/red]")
-        console.print("[yellow]Please run this command from your project root.[/yellow]")
+        console.print(
+            "[yellow]Please run this command from your project root.[/yellow]"
+        )
         console.print("\n[cyan]If you haven't initialized a project yet:[/cyan]")
         console.print("  fastapps init myproject")
         return False
 
+    if not (project_root / "pyproject.toml").exists():
+        console.print("[red]Error: pyproject.toml not found in this directory.[/red]")
+        console.print(
+            "[yellow]FastApps now uses pyproject.toml for dependency management.[/yellow]"
+        )
+        console.print("Please run this command from a FastApps project root.")
+        console.print("\n[cyan]Need to create one?[/cyan]")
+        console.print("  fastapps init myproject")
+        return False
+
     # Create api directory if it doesn't exist
-    api_dir = Path("server/api")
+    api_dir = project_root / "server" / "api"
     api_dir.mkdir(parents=True, exist_ok=True)
 
     # Create __init__.py in api directory
@@ -70,32 +89,61 @@ def use_metorial():
         metorial_file.write_text(METORIAL_TEMPLATE)
         console.print(f"\n[green]✓ Created: {metorial_file}[/green]")
 
-    # Check requirements.txt and suggest adding dependencies
-    req_file = Path("requirements.txt")
-    if req_file.exists():
-        requirements = req_file.read_text()
-        needs_metorial = "metorial" not in requirements
-        needs_openai = "openai" not in requirements
+    # Check dependencies using uv commands
+    missing_deps: list[str] = []
 
-        if needs_metorial or needs_openai:
-            console.print("\n[yellow]⚠ Missing dependencies in requirements.txt:[/yellow]")
-            if needs_metorial:
-                console.print("  - metorial")
-            if needs_openai:
-                console.print("  - openai")
+    try:
+        missing_deps = core_utils.safe_check_dependencies(METORIAL_DEPENDENCIES)
 
-            console.print("\n[cyan]Add these dependencies:[/cyan]")
-            console.print("  echo 'metorial' >> requirements.txt")
-            console.print("  echo 'openai' >> requirements.txt")
-            console.print("  pip install -r requirements.txt")
-            console.print("  # Or: uv pip install -r requirements.txt")
+        if missing_deps:
+            console.print("\n[yellow]Installing required Python packages...[/yellow]")
+            try:
+                core_utils.run_uv_command(
+                    ["add", *missing_deps],
+                    cwd=project_root,
+                )
+                console.print(
+                    f"[green]✓ Added dependencies: {', '.join(missing_deps)}[/green]"
+                )
+                missing_deps = []
+            except FileNotFoundError:
+                cli_utils.print_uv_installation_message()
+            except subprocess.CalledProcessError as exc:
+                console.print(
+                    "[red]Failed to install dependencies automatically via uv.[/red]"
+                )
+                if exc.stderr:
+                    console.print(f"[dim]{exc.stderr.strip()}[/dim]")
+
+    except Exception:
+        # Fallback: suggest dependencies if we can't check
+        missing_deps = ["metorial", "openai"]
+        console.print(
+            "\n[yellow]⚠ Could not check dependencies. Make sure to install:[/yellow]"
+        )
+        for dep in missing_deps:
+            console.print(f"  - {dep}")
+        console.print("\n[cyan]Add these dependencies:[/cyan]")
+        console.print(f"  uv add {' '.join(missing_deps)}")
+        console.print(
+            "\n[dim]Note: Make sure uv is installed and run 'uv sync' first[/dim]"
+        )
+
+    if missing_deps:
+        cli_utils.print_missing_dependencies(missing_deps)
 
     # Display setup instructions
     console.print("\n[bold green]✓ Metorial MCP integration added![/bold green]")
     console.print("\n[cyan]Setup Instructions:[/cyan]")
-    console.print("\n[yellow]1. Install dependencies:[/yellow]")
-    console.print("   pip install metorial openai")
-    console.print("   # Or: uv pip install metorial openai")
+
+    # Only show install instructions if dependencies are missing
+    if missing_deps:
+        console.print("\n[yellow]1. Install dependencies:[/yellow]")
+        console.print(f"   uv add {' '.join(missing_deps)}")
+        console.print("   uv sync  # Ensure lockfile is applied")
+    else:
+        console.print("\n[yellow]1. Sync dependencies:[/yellow]")
+        console.print("   uv sync")
 
     console.print("\n[yellow]2. Set environment variables:[/yellow]")
     console.print("   export METORIAL_API_KEY='your_metorial_api_key'")
@@ -130,4 +178,3 @@ def use_integration(integration_name: str):
         console.print("  - metorial    Add Metorial MCP integration")
         console.print("\n[dim]More integrations coming soon![/dim]")
         return False
-

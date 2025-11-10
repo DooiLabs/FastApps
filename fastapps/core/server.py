@@ -7,7 +7,6 @@ from fastapps.core.utils import get_cli_version
 
 from .widget import BaseWidget, ClientContext, UserContext
 
-
 # Auth imports (optional, graceful degradation if not available)
 try:
     from mcp.server.auth.provider import TokenVerifier
@@ -219,7 +218,9 @@ class WidgetMCPServer:
                 types.InitializeResult(
                     protocolVersion=req.params.protocolVersion,
                     capabilities=types.ServerCapabilities(),
-                    serverInfo=types.Implementation(name="FastApps", version=get_cli_version()),
+                    serverInfo=types.Implementation(
+                        name="FastApps", version=get_cli_version()
+                    ),
                 )
             )
 

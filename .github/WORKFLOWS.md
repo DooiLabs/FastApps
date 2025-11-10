@@ -143,22 +143,22 @@ uv sync --dev
 # pip install -e ".[dev]"
 
 # Run tests
-pytest
+uv run pytest
 
 # Run tests with coverage
-pytest --cov=fastapps --cov-report=html
+uv run pytest --cov=fastapps --cov-report=html
 
 # Format code
-black .
+uv run black .
 
 # Lint code
-ruff check .
+uv run ruff check .
 
 # Build package
-python -m build
+uv run python -m build
 
 # Check package
-twine check dist/*
+uv run twine check dist/*
 ```
 
 ## Troubleshooting
@@ -167,11 +167,11 @@ twine check dist/*
 
 **Tests fail**:
 - Check test output in GitHub Actions logs
-- Run tests locally: `pytest -v`
+- Run tests locally: `uv run pytest -v`
 
 **Linting fails**:
-- Run `black .` to auto-format
-- Run `ruff check .` to see issues
+- Run `uv run black .` to auto-format
+- Run `uv run ruff check .` to see issues
 
 **Build fails**:
 - Ensure `pyproject.toml` is valid
