@@ -123,7 +123,6 @@ class BaseWidget(ABC):
     widget_csp: Optional[Dict[str, List[str]]] = None
     widget_prefers_border: bool = False
     widget_domain: Optional[str] = None
-    read_only: bool = True
 
     # Localization support
     supported_locales: Optional[List[str]] = (
@@ -202,10 +201,7 @@ class BaseWidget(ABC):
             "openai/toolInvocation/invoking": self.invoking,
             "openai/toolInvocation/invoked": self.invoked,
             "openai/widgetAccessible": self.widget_accessible,
-            "openai/resultCanProduceWidget": True,
-            "annotations": {
-                "readOnlyHint": self.read_only,
-            },
+            "openai/resultCanProduceWidget": True
         }
 
         # Add security schemes if defined (per MCP spec)

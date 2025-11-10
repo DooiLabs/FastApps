@@ -157,6 +157,13 @@ for (const file of entries) {
   console.groupEnd();
   builtNames.push(name);
   console.log(`Built ${name}`);
+
+  // Ensure CSS file exists (create empty one if not generated)
+  const cssFile = path.join(outDir, `${name}.css`);
+  if (!fs.existsSync(cssFile)) {
+    fs.writeFileSync(cssFile, "", "utf8");
+    console.log(`Created empty CSS file for ${name}`);
+  }
 }
 
 const outputs = fs
@@ -218,7 +225,9 @@ if (MODE === "inline") {
     console.log(`${htmlPath} (generated inline)`);
   }
 } else {
-  const defaultBaseUrl = "http://localhost:4444";
+  // Use relative /assets path to work with the proxy server
+  // This allows assets to be served through the same origin, avoiding CORS/PNA/mixed content issues
+  const defaultBaseUrl = "/assets";
   const baseUrlCandidate = process.env.BASE_URL?.trim() ?? "";
   const baseUrlRaw = baseUrlCandidate || defaultBaseUrl;
   const normalizedBaseUrl = baseUrlRaw.replace(/\/+$/, "");
@@ -238,6 +247,6 @@ if (MODE === "inline") {
 </html>
 `;
     fs.writeFileSync(htmlPath, html, { encoding: "utf8" });
-    console.log(`${htmlPath} (generated with external references)`);
+    console.log(`${htmlPath} (generated)`);
   }
 }
