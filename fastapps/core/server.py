@@ -38,9 +38,12 @@ class WidgetMCPServer:
         auth_required_scopes: Optional[List[str]] = None,
         auth_audience: Optional[str] = None,
         token_verifier: Optional["TokenVerifier"] = None,
+        # Global CSP configuration for all widgets (optional)
+        global_resource_domains: Optional[List[str]] = None,
+        global_connect_domains: Optional[List[str]] = None,
     ):
         """
-        Initialize MCP server with optional OAuth authentication.
+        Initialize MCP server with optional OAuth authentication and global CSP.
 
         Args:
             name: Server name
@@ -50,6 +53,8 @@ class WidgetMCPServer:
             auth_required_scopes: Required OAuth scopes (e.g., ["user", "read:data"])
             auth_audience: JWT audience claim (optional)
             token_verifier: Custom TokenVerifier (optional, uses JWTVerifier if not provided)
+            global_resource_domains: Domains to allow for all widgets (scripts, styles, images)
+            global_connect_domains: Domains to allow for API calls (fetch, XHR)
 
         Example (Simple):
             server = WidgetMCPServer(
@@ -58,6 +63,19 @@ class WidgetMCPServer:
                 auth_issuer_url="https://tenant.auth0.com",
                 auth_resource_server_url="https://example.com/mcp",
                 auth_required_scopes=["user"],
+            )
+
+        Example (With Global CSP):
+            server = WidgetMCPServer(
+                name="my-widgets",
+                widgets=tools,
+                global_resource_domains=[
+                    "https://pub-YOUR-BUCKET-ID.r2.dev",  # R2 images
+                    "https://fonts.googleapis.com",       # Google Fonts
+                ],
+                global_connect_domains=[
+                    "https://api.example.com",  # External API
+                ],
             )
 
         Example (Custom Verifier):
@@ -73,7 +91,11 @@ class WidgetMCPServer:
         self.widgets_by_uri = {w.template_uri: w for w in widgets}
         self.client_locale: Optional[str] = None
 
-        # Auto-configure widget CSP based on PUBLIC_URL environment variable
+        # Store global CSP configuration
+        self.global_resource_domains = global_resource_domains or []
+        self.global_connect_domains = global_connect_domains or []
+
+        # Auto-configure widget CSP based on PUBLIC_URL and global settings
         self._configure_widget_csp(widgets)
 
         # Store server auth configuration for per-widget inheritance
@@ -126,27 +148,46 @@ class WidgetMCPServer:
         self._register_handlers()
 
     def _configure_widget_csp(self, widgets: List[BaseWidget]):
-        """Auto-configure widget CSP based on PUBLIC_URL environment variable."""
+        """
+        Auto-configure widget CSP based on:
+        1. PUBLIC_URL environment variable
+        2. Global CSP domains (global_resource_domains, global_connect_domains)
+        3. Widget-specific CSP (widget.widget_csp)
+        """
         import os
 
         public_url = os.environ.get("PUBLIC_URL", "").strip()
 
-        if not public_url:
-            return
-
-        # Configure CSP for all widgets that don't have custom CSP
+        # Configure CSP for all widgets
         for widget in widgets:
-            # Check if CSP is not configured (None or empty resource_domains)
-            needs_csp = (
-                widget.widget_csp is None or
-                not widget.widget_csp.get("resource_domains")
-            )
-
-            if needs_csp:
+            # Initialize CSP if not present
+            if widget.widget_csp is None:
                 widget.widget_csp = {
-                    "resource_domains": [public_url],
+                    "resource_domains": [],
                     "connect_domains": []
                 }
+
+            # Get existing domains
+            resource_domains = widget.widget_csp.get("resource_domains", [])
+            connect_domains = widget.widget_csp.get("connect_domains", [])
+
+            # Merge PUBLIC_URL
+            if public_url and public_url not in resource_domains:
+                resource_domains.append(public_url)
+
+            # Merge global resource domains
+            for domain in self.global_resource_domains:
+                if domain not in resource_domains:
+                    resource_domains.append(domain)
+
+            # Merge global connect domains
+            for domain in self.global_connect_domains:
+                if domain not in connect_domains:
+                    connect_domains.append(domain)
+
+            # Update widget CSP
+            widget.widget_csp["resource_domains"] = resource_domains
+            widget.widget_csp["connect_domains"] = connect_domains
 
     def _register_handlers(self):
         """Register all MCP handlers for widget support."""

@@ -5,6 +5,7 @@ from rich.console import Console
 
 from fastapps.core.utils import get_cli_version
 
+from .commands.allow_csp import add_csp_domain, list_csp_domains, remove_csp_domain
 from .commands.build import build_command
 from .commands.cloud import cloud
 from .commands.create import create_widget
@@ -199,6 +200,71 @@ def use(integration_name):
     This will create server/api/metorial_mcp.py with environment variable support.
     """
     use_integration(integration_name)
+
+
+# CSP management command group
+@cli.group()
+def csp():
+    """Manage Content Security Policy (CSP) for widgets.
+
+    Configure domains allowed to load external resources (scripts, styles, images)
+    and make API calls (fetch, XHR) from your widgets.
+
+    All CSP configuration is stored in fastapps.json and automatically
+    loaded when creating WidgetMCPServer.
+    """
+    pass
+
+
+@csp.command("add")
+@click.option("--url", help="Domain URL to allow (e.g., https://example.com)")
+@click.option(
+    "--type",
+    "domain_type",
+    type=click.Choice(["resource", "connect"], case_sensitive=False),
+    help="Domain type: 'resource' for assets, 'connect' for APIs",
+)
+def csp_add(url, domain_type):
+    """Add a domain to CSP allowlist.
+
+    Examples:
+        fastapps csp add --url https://pub-YOUR-ID.r2.dev --type resource
+        fastapps csp add --url https://api.example.com --type connect
+        fastapps csp add  # Interactive mode
+
+    Domain types:
+        resource - For scripts, styles, images, fonts (e.g., CDN, R2 buckets)
+        connect  - For API calls via fetch/XHR (e.g., external APIs)
+    """
+    add_csp_domain(url=url, domain_type=domain_type)
+
+
+@csp.command("remove")
+@click.option("--url", help="Domain URL to remove")
+@click.option(
+    "--type",
+    "domain_type",
+    type=click.Choice(["resource", "connect"], case_sensitive=False),
+    help="Domain type: 'resource' or 'connect'",
+)
+def csp_remove(url, domain_type):
+    """Remove a domain from CSP allowlist.
+
+    Examples:
+        fastapps csp remove --url https://example.com --type resource
+        fastapps csp remove  # Interactive mode
+    """
+    remove_csp_domain(url=url, domain_type=domain_type)
+
+
+@csp.command("list")
+def csp_list():
+    """List all configured CSP domains.
+
+    Shows currently configured resource and connect domains
+    from fastapps.json.
+    """
+    list_csp_domains()
 
 
 if __name__ == "__main__":
