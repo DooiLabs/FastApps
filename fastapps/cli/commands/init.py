@@ -8,7 +8,7 @@ from pathlib import Path
 
 from rich.console import Console
 
-from fastapps.core.utils import get_cli_version
+from fastapps.core.utils import get_cli_version, run_uv_command
 
 console = Console()
 
@@ -137,11 +137,6 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8001)
 '''
 
-REQUIREMENTS_TXT = f"""# All dependencies included in fastapps package
-# pip install fastapps (or: uv pip install fastapps) is all you need!
-fastapps>={get_cli_version()}
-"""
-
 
 def get_package_json(project_name: str) -> str:
     """Generate package.json content."""
@@ -180,7 +175,11 @@ ChatGPT widgets built with [FastApps](https://pypi.org/project/fastapps/).
 Your project includes an example widget (`my_widget`) to get you started!
 
 ```bash
-fastapps dev
+# Install dependencies
+uv sync
+
+# Start development server
+uv run fastapps dev
 ```
 
 This will build your widgets and start the development server.
@@ -188,8 +187,8 @@ This will build your widgets and start the development server.
 ## Creating More Widgets
 
 ```bash
-fastapps create another_widget
-fastapps dev
+uv run fastapps create another_widget
+uv run fastapps dev
 ```
 
 ## Project Structure
@@ -206,9 +205,19 @@ fastapps dev
 │       └── index.jsx        # Example React component
 │
 ├── assets/                  # Built widgets (auto-generated)
+├── pyproject.toml          # Python dependencies
+├── uv.lock                 # Dependency lock file
 └── package.json
 ```
 
+## Dependency Management
+
+This project uses `uv` for Python dependency management:
+
+- `uv sync` - Install dependencies from pyproject.toml and uv.lock
+- `uv add <package>` - Add a new dependency
+- `uv add --dev <package>` - Add a development dependency
+- `uv run <command>` - Run commands in the project environment
 ## Content Security Policy (CSP)
 
 Your project includes a default CSP configuration in `fastapps.json` that allows loading images from a safe public CDN. You can manage CSP domains using the CLI:
@@ -233,6 +242,7 @@ The default domain (`https://pub-d9760dbd87764044a85486be2fdf7f9f.r2.dev`) is a 
 
 - **FastApps Framework**: https://pypi.org/project/fastapps/
 - **FastApps (React)**: https://www.npmjs.com/package/fastapps
+- **uv Package Manager**: https://github.com/astral-sh/uv
 - **Documentation**: https://github.com/fastapps-framework/fastapps
 
 ## License
@@ -285,8 +295,8 @@ build-all.mts
 """
 
 
-def init_project(project_name: str):
-    """Initialize a new Floydr project."""
+def init_project(project_name: str, python_version: str = None):
+    """Initialize a new FastApps project."""
 
     project_path = Path(project_name)
 
@@ -300,25 +310,51 @@ def init_project(project_name: str):
     )
 
     try:
-        # Create directory structure
-        console.print("Creating directory structure...")
-        (project_path / "server" / "tools").mkdir(parents=True)
-        (project_path / "server" / "api").mkdir(parents=True)
-        (project_path / "widgets").mkdir(parents=True)
+        # Create project using uv init --bare
+        console.print("Creating project structure with uv...")
+        try:
+            # Build uv init command with optional Python version
+            uv_init_args = ["init", "--bare", project_name]
+            if python_version:
+                uv_init_args.extend(["--python", python_version])
+                console.print(f"Using Python version: {python_version}")
 
-        # Create empty __init__.py files
-        console.print("Creating Python modules...")
-        (project_path / "server" / "__init__.py").write_text("")
-        (project_path / "server" / "tools" / "__init__.py").write_text("")
-        (project_path / "server" / "api" / "__init__.py").write_text("")
+            # Use uv init --bare to create a project with pyproject.toml
+            run_uv_command(uv_init_args, cwd=project_path.parent)
 
-        # Create server/main.py
-        console.print("Creating server...")
-        (project_path / "server" / "main.py").write_text(SERVER_MAIN_TEMPLATE)
+            # Add FastApps dependency using uv add with version pinning
+            console.print("Adding FastApps dependency...")
+            fastapps_version = get_cli_version()
 
-        # Create requirements.txt
-        console.print("Creating requirements.txt...")
-        (project_path / "requirements.txt").write_text(REQUIREMENTS_TXT)
+            run_uv_command(
+                ["add", f"fastapps>={fastapps_version}"],
+                cwd=project_path,
+            )
+
+            # Create additional directory structure not created by uv init
+            console.print("Creating FastApps directories...")
+            (project_path / "server" / "tools").mkdir(parents=True, exist_ok=True)
+            (project_path / "server" / "api").mkdir(parents=True, exist_ok=True)
+            (project_path / "widgets").mkdir(parents=True, exist_ok=True)
+
+            # Create empty __init__.py files
+            console.print("Creating Python modules...")
+            (project_path / "server" / "__init__.py").write_text("")
+            (project_path / "server" / "tools" / "__init__.py").write_text("")
+            (project_path / "server" / "api" / "__init__.py").write_text("")
+
+            # Create server/main.py
+            console.print("Creating server...")
+            (project_path / "server" / "main.py").write_text(SERVER_MAIN_TEMPLATE)
+
+        except FileNotFoundError as exc:
+            console.print(f"[red][ERROR] {exc}[/red]")
+            return False
+        except subprocess.CalledProcessError as exc:
+            console.print(
+                f"[red][ERROR] Failed to initialize project with uv: {exc}[/red]"
+            )
+            return False
 
         # Create package.json
         console.print("Creating package.json...")
@@ -358,6 +394,7 @@ def init_project(project_name: str):
         try:
             os.chdir(project_path)
             from .create import create_widget
+
             # Suppress the verbose output from create_widget
             with contextlib.redirect_stdout(io.StringIO()):
                 create_widget("my_widget", auth_type=None, scopes=None)
@@ -373,7 +410,7 @@ def init_project(project_name: str):
                 cwd=project_path,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             console.print("[green]npm packages installed[/green]")
         except FileNotFoundError:
@@ -384,7 +421,8 @@ def init_project(project_name: str):
         console.print("\n[green]All set![/green]")
         console.print("\n[cyan]Next steps:[/cyan]")
         console.print(f"  [bold]cd {project_name}[/bold]")
-        console.print("  [bold]fastapps dev[/bold]")
+        console.print("  [bold]uv sync[/bold]  # Install Python dependencies")
+        console.print("  [bold]uv run fastapps dev[/bold]  # Start development server")
         console.print("\n[green]Happy building![/green]\n")
 
         return True

@@ -49,42 +49,23 @@ cd fastapps
 uv sync --dev
 
 # Install pre-commit hooks (already installed via uv sync --dev)
-pre-commit install
-```
-
-**Alternative: Using pip (traditional approach)**
-
-```bash
-# Clone your fork
-git clone https://github.com/YOUR_USERNAME/fastapps.git
-cd fastapps
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install development dependencies
-pip install -e ".[dev]"
-
-# Install pre-commit hooks (recommended)
-pip install pre-commit
-pre-commit install
+uv run pre-commit install
 ```
 
 ### Running Tests
 
 ```bash
 # Run all tests
-pytest
+uv run pytest
 
 # Run with coverage
-pytest --cov=fastapps --cov-report=html
+uv run pytest --cov=fastapps --cov-report=html
 
 # Run specific test file
-pytest tests/test_widget.py
+uv run pytest tests/test_widget.py
 
 # Run with verbose output
-pytest -v
+uv run pytest -v
 ```
 
 ### Building the Package
@@ -123,13 +104,13 @@ target-version = ['py311']
 **Usage**:
 ```bash
 # Format all Python files
-black .
+uv run black .
 
 # Check without modifying
-black --check .
+uv run black --check .
 
 # Format specific file
-black fastapps/core/widget.py
+uv run black fastapps/core/widget.py
 ```
 
 #### Ruff - Linter
@@ -154,13 +135,13 @@ select = [
 **Usage**:
 ```bash
 # Lint all files
-ruff check .
+uv run ruff check .
 
 # Auto-fix issues
-ruff check --fix .
+uv run ruff check --fix .
 
 # Lint specific file
-ruff check fastapps/core/widget.py
+uv run ruff check fastapps/core/widget.py
 ```
 
 #### Type Checking (Optional)
@@ -170,7 +151,6 @@ We use mypy for type checking (not strictly enforced but encouraged):
 ```bash
 # Install mypy
 uv pip install mypy
-# Or: pip install mypy
 
 # Run type checking
 mypy fastapps --ignore-missing-imports
@@ -190,16 +170,15 @@ For React components in the `widgets/` directory:
 We recommend using pre-commit hooks to automatically format and lint code:
 
 ```bash
-# If you used uv sync --dev or pip install -e ".[dev]", pre-commit is already installed.
+# If you used uv sync --dev, pre-commit is already installed.
 # Just install the git hooks:
-pre-commit install
+uv run pre-commit install
 
 # Run manually on all files
-pre-commit run --all-files
+uv run pre-commit run --all-files
 
 # If pre-commit is not installed (standalone installation):
 # uv pip install pre-commit
-# Or: pip install pre-commit
 ```
 
 Create `.pre-commit-config.yaml`:
@@ -282,25 +261,6 @@ uv build
 
 # Check package
 uv run twine check dist/*
-```
-
-**Or with pip (traditional):**
-
-```bash
-# Format code
-black .
-
-# Lint code
-ruff check .
-
-# Run tests
-pytest --cov=fastapps
-
-# Build package
-python -m build
-
-# Check package
-twine check dist/*
 ```
 
 ## Pull Request Process
@@ -469,10 +429,10 @@ git checkout -b feature/my-new-feature
 black .
 
 # 4. Lint code
-ruff check --fix .
+uv run ruff check --fix .
 
 # 5. Run tests
-pytest
+uv run pytest
 
 # 6. Commit changes
 git add .

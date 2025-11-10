@@ -36,12 +36,13 @@ uv tool install --upgrade fastapps # Update to the latest version
 
 For full installation instructions, including verification, upgrading from the official MCPSDK, and developer setup, see the Installation Guide.
 
-then, you can quickstart by running commands below :
+Then, you can quickstart by running commands below :
 
 ```bash
-fastapps init my-app
+uv run fastapps init my-app
 cd my-app
-fastapps dev
+uv sync          # Install Python deps & create uv.lock
+uv run fastapps dev
 ```
 
 That's it! You'll gonna see an image with a public url. You can test the server with following guides.
@@ -49,6 +50,17 @@ That's it! You'll gonna see an image with a public url. You can test the server 
 ![alt text](image.png)
 
 The public url is one-time, generated with [cloudflare tunnel](https://github.com/cloudflare/cloudflared).
+
+
+## Managing Dependencies with uv
+
+FastApps projects now rely on `pyproject.toml` + `uv.lock` for Python dependencies.
+
+- `uv sync` installs everything defined in `pyproject.toml` and writes/updates `uv.lock` for reproducible builds. Run it whenever you pull new changes or after editing dependencies.
+- `uv add <package>` adds new dependencies and immediately updates both `pyproject.toml` and `uv.lock`.
+- `uv run <command>` executes CLI tools (like `fastapps dev`) inside the synced environment without activating a virtualenv manually.
+
+> **Tip:** If `uv` is not installed, follow their [installation instructions](https://docs.astral.sh/uv/getting-started/installation/) and rerun `uv sync`. Without `uv`, FastApps commands that manage dependencies (e.g., `fastapps init`, `fastapps use`) will fail with a helpful error message.
 
 
 ## Test App
@@ -72,7 +84,7 @@ Add your public URL + /mcp to ChatGPT's `"Settings > Connectors"` .
 ## Creating More Widgets
 
 ```bash
-fastapps create additional-widget
+uv run fastapps create additional-widget
 ```
 
 ### Using Widget Templates
@@ -81,9 +93,9 @@ FastApps provides pre-built templates to jumpstart your widget development:
 
 ```bash
 # Create widget from a template
-fastapps create my-list --template list          # Vertical list with items
-fastapps create my-carousel --template carousel  # Horizontal scrolling cards
-fastapps create my-albums --template albums      # Photo gallery viewer
+uv run fastapps create my-list --template list          # Vertical list with items
+uv run fastapps create my-carousel --template carousel  # Horizontal scrolling cards
+uv run fastapps create my-albums --template albums      # Photo gallery viewer
 ```
 
 
@@ -180,16 +192,13 @@ cd FastApps
 # Install development dependencies (recommended - matches CI)
 uv sync --dev
 
-# Or use pip (traditional approach)
-# pip install -e ".[dev]"
-
 # Install pre-commit hooks (already installed via uv sync --dev)
-pre-commit install
+uv run pre-commit install
 
 # Make changes and ensure they pass checks
-black .
-ruff check --fix .
-pytest
+uv run black .
+uv run ruff check --fix .
+uv run pytest
 
 # Submit a pull request
 ```

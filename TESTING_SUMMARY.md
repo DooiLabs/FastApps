@@ -244,8 +244,7 @@ Widget receives UserContext:
 
 **Solution**:
 ```bash
-pip install --upgrade fastmcp
-# Or: uv pip install --upgrade fastmcp
+uv pip install --upgrade fastmcp
 ```
 
 ### Issue: "Failed to initialize JWKS"
@@ -349,4 +348,3 @@ cd /Users/yunhyeok/Desktop/fastapps/FastApps
 ```
 
 Follow the prompts and you'll have a working OAuth test environment in minutes!
-
