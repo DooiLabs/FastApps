@@ -41,6 +41,7 @@ Then, you can quickstart by running commands below :
 ```bash
 uv run fastapps init my-app
 cd my-app
+npm install
 uv sync          # Install Python deps & create uv.lock
 uv run fastapps dev
 ```
