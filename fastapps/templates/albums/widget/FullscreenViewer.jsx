@@ -1,6 +1,6 @@
 import React from "react";
 import { ArrowLeft } from "lucide-react";
-import { useMaxHeight } from "./hooks/use-max-height";
+import { useMaxHeight } from "fastapps";
 import FilmStrip from "./FilmStrip";
 
 export default function FullscreenViewer({ album, onBack }) {

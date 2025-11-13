@@ -1,9 +1,7 @@
 import React, { useEffect } from "react";
-import { useWidgetProps } from "fastapps";
+import { useWidgetProps, useMaxHeight, useOpenAiGlobal } from "fastapps";
 import useEmblaCarousel from "embla-carousel-react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { useMaxHeight } from "./hooks/use-max-height";
-import { useOpenAiGlobal } from "./hooks/use-openai-global";
 import FullscreenViewer from "./FullscreenViewer";
 import AlbumCard from "./AlbumCard";
 import "./index.css";
