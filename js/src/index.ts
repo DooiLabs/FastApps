@@ -4,7 +4,7 @@
  * @packageDocumentation
  */
 
-export { useOpenAiGlobal } from './hooks/useOpenaiGlobal';
+export { useOpenAiGlobal } from './hooks/useOpenAiGlobal';
 export { useWidgetProps } from './hooks/useWidgetProps';
 export { useWidgetState } from './hooks/useWidgetState';
 export { useDisplayMode } from './hooks/useDisplayMode';

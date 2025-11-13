@@ -6,14 +6,13 @@ import Card from "./Card";
 import "./index.css";
 
 function {ClassName}() {
-  const { structuredContent, isError } = useWidgetProps();
-  const cards = structuredContent?.cards || [];
+  const { cards } = useWidgetProps() || {};
 
   useEffect(() => {
-    if (structuredContent) {
-      console.log('Carousel widget props:', structuredContent);
+    if (cards) {
+      console.log('Carousel widget props:', { cards });
     }
-  }, [structuredContent]);
+  }, [cards]);
 
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "center",
@@ -45,10 +44,10 @@ function {ClassName}() {
     <div className="antialiased relative w-full text-black py-5 bg-white">
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex gap-4 items-stretch">
-          {cards.map((card, i) => (
+          {(cards || []).map((card, i, arr) => (
             <div
               key={card.id}
-              className={`shrink-0 ${i === 0 ? "ml-5" : ""} ${i === cards.length - 1 ? "mr-5" : ""}`}
+              className={`shrink-0 ${i === 0 ? "ml-5" : ""} ${i === arr.length - 1 ? "mr-5" : ""}`}
             >
               <Card card={card} />
             </div>

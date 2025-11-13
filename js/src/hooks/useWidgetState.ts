@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type SetStateAction } from "react";
-import { useOpenAiGlobal } from "./useOpenaiGlobal";
+import { useOpenAiGlobal } from "./useOpenAiGlobal";
 import type { UnknownObject } from "./types";
 
 /**

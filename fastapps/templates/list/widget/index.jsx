@@ -4,14 +4,13 @@ import { PlusCircle, Star } from "lucide-react";
 import "./index.css";
 
 function {ClassName}() {
-  const { structuredContent, isError } = useWidgetProps();
-  const items = structuredContent?.items || [];
+  const { title, description, items } = useWidgetProps() || {};
 
   useEffect(() => {
-    if (structuredContent) {
-      console.log('List widget props:', structuredContent);
+    if (title || items) {
+      console.log('List widget props:', { title, description, items });
     }
-  }, [structuredContent]);
+  }, [title, description, items]);
 
   return (
     <div className="antialiased w-full text-black px-4 pb-2 border border-black/10 rounded-2xl sm:rounded-3xl overflow-hidden bg-white">
@@ -26,10 +25,10 @@ function {ClassName}() {
           ></div>
           <div>
             <div className="text-base sm:text-xl font-medium">
-              {structuredContent?.title || "List Title"}
+              {title || "List Title"}
             </div>
             <div className="text-sm text-black/60">
-              {structuredContent?.description || "A list of items"}
+              {description || "A list of items"}
             </div>
           </div>
           <div className="flex-auto hidden sm:flex justify-end pr-2">
@@ -42,7 +41,7 @@ function {ClassName}() {
           </div>
         </div>
         <div className="min-w-full text-sm flex flex-col">
-          {items.slice(0, 7).map((item, i) => (
+          {(items || []).slice(0, 7).map((item, i) => (
             <div
               key={item.id || i}
               className="px-3 -mx-2 rounded-2xl hover:bg-black/5"
@@ -96,7 +95,7 @@ function {ClassName}() {
               </div>
             </div>
           ))}
-          {items.length === 0 && (
+          {(!items || items.length === 0) && (
             <div className="py-6 text-center text-black/60">
               No items found.
             </div>

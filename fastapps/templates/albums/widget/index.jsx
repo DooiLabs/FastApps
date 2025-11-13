@@ -9,8 +9,7 @@ import AlbumCard from "./AlbumCard";
 import "./index.css";
 
 function AlbumsCarousel({ onSelect }) {
-  const { structuredContent } = useWidgetProps();
-  const albums = structuredContent?.albums || [];
+  const { albums } = useWidgetProps() || {};
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "center",
     loop: false,
@@ -40,10 +39,10 @@ function AlbumsCarousel({ onSelect }) {
     <div className="antialiased relative w-full text-black py-5 select-none">
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex gap-5 items-stretch">
-          {albums.map((album, i) => (
+          {(albums || []).map((album, i, arr) => (
             <div
               key={album.id}
-              className={`shrink-0 ${i === 0 ? "ml-6" : ""} ${i === albums.length - 1 ? "mr-6" : ""}`}
+              className={`shrink-0 ${i === 0 ? "ml-6" : ""} ${i === arr.length - 1 ? "mr-6" : ""}`}
             >
               <AlbumCard album={album} onSelect={onSelect} />
             </div>
@@ -117,16 +116,16 @@ function AlbumsCarousel({ onSelect }) {
 }
 
 function {ClassName}() {
-  const { structuredContent, isError } = useWidgetProps();
+  const { albums } = useWidgetProps() || {};
   const displayMode = useOpenAiGlobal("displayMode");
   const [selectedAlbum, setSelectedAlbum] = React.useState(null);
   const maxHeight = useMaxHeight() ?? undefined;
 
   useEffect(() => {
-    if (structuredContent) {
-      console.log('Albums widget props:', structuredContent);
+    if (albums) {
+      console.log('Albums widget props:', { albums });
     }
-  }, [structuredContent]);
+  }, [albums]);
 
   const handleSelectAlbum = (album) => {
     setSelectedAlbum(album);

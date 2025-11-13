@@ -2,7 +2,7 @@ import React from 'react';
 import { useWidgetProps } from 'fastapps';
 
 export default function {ClassName}() {
-  const { structuredContent, isError } = useWidgetProps();
+  const { message } = useWidgetProps() || {};
 
   return (
     <div style={{
@@ -13,7 +13,7 @@ export default function {ClassName}() {
       borderRadius: '8px',
       fontFamily: 'monospace'
     }}>
-      <h1>{structuredContent?.message || 'Welcome to FastApps'}</h1>
+      <h1>{message || 'Welcome to FastApps'}</h1>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useOpenAiGlobal } from "./useOpenaiGlobal";
+import { useOpenAiGlobal } from "./useOpenAiGlobal";
 
 /**
  * Hook to get widget props from ChatGPT tool output.

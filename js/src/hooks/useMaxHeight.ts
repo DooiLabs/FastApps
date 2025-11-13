@@ -1,4 +1,4 @@
-import { useOpenAiGlobal } from "./useOpenaiGlobal";
+import { useOpenAiGlobal } from "./useOpenAiGlobal";
 
 /**
  * Hook to access the maximum height constraint from ChatGPT.
