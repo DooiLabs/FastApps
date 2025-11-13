@@ -1,4 +1,4 @@
-"""CLI commands for Floydr."""
+"""CLI commands for FastApps."""
 
 from .create import create_widget
 from .init import init_project
