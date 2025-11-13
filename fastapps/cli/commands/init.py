@@ -147,7 +147,7 @@ def get_package_json(project_name: str) -> str:
             "name": project_name,
             "version": "1.0.0",
             "type": "module",
-            "description": "Floydr ChatGPT widgets project",
+            "description": "FastApps project",
             "scripts": {"build": "npx tsx node_modules/fastapps/build-all.mts"},
             "dependencies": {
                 "fastapps": "^1.0.0",
