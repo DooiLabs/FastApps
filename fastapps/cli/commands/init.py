@@ -320,7 +320,7 @@ def init_project(project_name: str, python_version: str = None):
                 console.print(f"Using Python version: {python_version}")
 
             # Use uv init --bare to create a project with pyproject.toml
-            run_uv_command(uv_init_args, cwd=project_path.parent)
+            run_uv_command(uv_init_args, cwd=Path.cwd())
 
             # Add FastApps dependency using uv add with version pinning
             console.print("Adding FastApps dependency...")
@@ -339,13 +339,13 @@ def init_project(project_name: str, python_version: str = None):
 
             # Create empty __init__.py files
             console.print("Creating Python modules...")
-            (project_path / "server" / "__init__.py").write_text("")
-            (project_path / "server" / "tools" / "__init__.py").write_text("")
-            (project_path / "server" / "api" / "__init__.py").write_text("")
+            (project_path / "server" / "__init__.py").write_text("", encoding="utf-8")
+            (project_path / "server" / "tools" / "__init__.py").write_text("", encoding="utf-8")
+            (project_path / "server" / "api" / "__init__.py").write_text("", encoding="utf-8")
 
             # Create server/main.py
             console.print("Creating server...")
-            (project_path / "server" / "main.py").write_text(SERVER_MAIN_TEMPLATE)
+            (project_path / "server" / "main.py").write_text(SERVER_MAIN_TEMPLATE, encoding="utf-8")
 
         except FileNotFoundError as exc:
             console.print(f"[red][ERROR] {exc}[/red]")
@@ -358,16 +358,16 @@ def init_project(project_name: str, python_version: str = None):
 
         # Create package.json
         console.print("Creating package.json...")
-        (project_path / "package.json").write_text(get_package_json(project_name))
+        (project_path / "package.json").write_text(get_package_json(project_name), encoding="utf-8")
 
         # Create README.md
         console.print("Creating README.md...")
         readme_content = PROJECT_README.format(project_name=project_name)
-        (project_path / "README.md").write_text(readme_content)
+        (project_path / "README.md").write_text(readme_content, encoding="utf-8")
 
         # Create .gitignore
         console.print("Creating .gitignore...")
-        (project_path / ".gitignore").write_text(GITIGNORE)
+        (project_path / ".gitignore").write_text(GITIGNORE, encoding="utf-8")
 
         # Create fastapps.json with default CSP
         console.print("Creating fastapps.json...")
@@ -381,7 +381,7 @@ def init_project(project_name: str, python_version: str = None):
             }
         }
         (project_path / "fastapps.json").write_text(
-            json.dumps(fastapps_config, indent=2)
+            json.dumps(fastapps_config, indent=2), encoding="utf-8"
         )
 
         console.print(

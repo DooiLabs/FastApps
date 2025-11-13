@@ -631,7 +631,7 @@ wheels = [
 
 [[package]]
 name = "fastapps"
-version = "1.1.2"
+version = "1.4.1"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
