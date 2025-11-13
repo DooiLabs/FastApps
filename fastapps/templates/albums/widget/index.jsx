@@ -9,8 +9,8 @@ import AlbumCard from "./AlbumCard";
 import "./index.css";
 
 function AlbumsCarousel({ onSelect }) {
-  const widgetProps = useWidgetProps();
-  const albums = widgetProps?.albums || [];
+  const { structuredContent } = useWidgetProps();
+  const albums = structuredContent?.albums || [];
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "center",
     loop: false,
@@ -117,16 +117,16 @@ function AlbumsCarousel({ onSelect }) {
 }
 
 function {ClassName}() {
-  const widgetProps = useWidgetProps();
+  const { structuredContent, isError } = useWidgetProps();
   const displayMode = useOpenAiGlobal("displayMode");
   const [selectedAlbum, setSelectedAlbum] = React.useState(null);
   const maxHeight = useMaxHeight() ?? undefined;
 
   useEffect(() => {
-    if (widgetProps) {
-      console.log('Albums widget props:', widgetProps);
+    if (structuredContent) {
+      console.log('Albums widget props:', structuredContent);
     }
-  }, [widgetProps]);
+  }, [structuredContent]);
 
   const handleSelectAlbum = (album) => {
     setSelectedAlbum(album);

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fastapps"
-version = "1.4.0"
+version = "1.4.1"
 description = "A zero-boilerplate framework for building interactive ChatGPT widgets"
 readme = "README.md"
 requires-python = ">=3.11"

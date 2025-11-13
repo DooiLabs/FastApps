@@ -6,14 +6,14 @@ import Card from "./Card";
 import "./index.css";
 
 function {ClassName}() {
-  const widgetProps = useWidgetProps();
-  const cards = widgetProps?.cards || [];
+  const { structuredContent, isError } = useWidgetProps();
+  const cards = structuredContent?.cards || [];
 
   useEffect(() => {
-    if (widgetProps) {
-      console.log('Carousel widget props:', widgetProps);
+    if (structuredContent) {
+      console.log('Carousel widget props:', structuredContent);
     }
-  }, [widgetProps]);
+  }, [structuredContent]);
 
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "center",

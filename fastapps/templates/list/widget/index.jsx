@@ -4,14 +4,14 @@ import { PlusCircle, Star } from "lucide-react";
 import "./index.css";
 
 function {ClassName}() {
-  const widgetProps = useWidgetProps();
-  const items = widgetProps?.items || [];
+  const { structuredContent, isError } = useWidgetProps();
+  const items = structuredContent?.items || [];
 
   useEffect(() => {
-    if (widgetProps) {
-      console.log('List widget props:', widgetProps);
+    if (structuredContent) {
+      console.log('List widget props:', structuredContent);
     }
-  }, [widgetProps]);
+  }, [structuredContent]);
 
   return (
     <div className="antialiased w-full text-black px-4 pb-2 border border-black/10 rounded-2xl sm:rounded-3xl overflow-hidden bg-white">
@@ -26,10 +26,10 @@ function {ClassName}() {
           ></div>
           <div>
             <div className="text-base sm:text-xl font-medium">
-              {widgetProps?.title || "List Title"}
+              {structuredContent?.title || "List Title"}
             </div>
             <div className="text-sm text-black/60">
-              {widgetProps?.description || "A list of items"}
+              {structuredContent?.description || "A list of items"}
             </div>
           </div>
           <div className="flex-auto hidden sm:flex justify-end pr-2">
