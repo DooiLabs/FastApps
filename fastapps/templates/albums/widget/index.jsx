@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useWidgetProps, useMaxHeight, useOpenAiGlobal } from "fastapps";
 import useEmblaCarousel from "embla-carousel-react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -6,8 +6,11 @@ import FullscreenViewer from "./FullscreenViewer";
 import AlbumCard from "./AlbumCard";
 import "./index.css";
 
-function AlbumsCarousel({ onSelect }) {
-  const { albums } = useWidgetProps() || {};
+function AlbumsCarousel({ albums, onSelect }) {
+  const normalizedAlbums = Array.isArray(albums)
+    ? albums.filter((album) => album && album.cover)
+    : [];
+  const hasMinimumItems = normalizedAlbums.length >= 3;
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "center",
     loop: false,
@@ -33,14 +36,24 @@ function AlbumsCarousel({ onSelect }) {
     };
   }, [emblaApi]);
 
+  if (!hasMinimumItems) {
+    return (
+      <div className="antialiased relative w-full py-5">
+        <div className="text-center text-sm text-black/80 dark:text-white/80 py-6">
+          Provide between 3 and 8 albums with covers to enable the gallery.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="antialiased relative w-full text-black py-5 select-none">
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex gap-5 items-stretch">
-          {(albums || []).map((album, i, arr) => (
+          {normalizedAlbums.map((album, i) => (
             <div
               key={album.id}
-              className={`shrink-0 ${i === 0 ? "ml-6" : ""} ${i === arr.length - 1 ? "mr-6" : ""}`}
+              className={`shrink-0 ${i === 0 ? "ml-6" : ""} ${i === normalizedAlbums.length - 1 ? "mr-6" : ""}`}
             >
               <AlbumCard album={album} onSelect={onSelect} />
             </div>
@@ -115,17 +128,35 @@ function AlbumsCarousel({ onSelect }) {
 
 function {ClassName}() {
   const { albums } = useWidgetProps() || {};
+  const normalizedAlbums = Array.isArray(albums)
+    ? albums
+        .filter((album) => album && album.cover)
+        .map((album) => ({
+          ...album,
+          photos: Array.isArray(album.photos) ? album.photos : [],
+        }))
+    : [];
+  const limitedAlbums = normalizedAlbums.slice(0, 8);
   const displayMode = useOpenAiGlobal("displayMode");
+  const isFullscreen = displayMode === "fullscreen";
   const [selectedAlbum, setSelectedAlbum] = React.useState(null);
   const maxHeight = useMaxHeight() ?? undefined;
 
-  useEffect(() => {
-    if (albums) {
-      console.log('Albums widget props:', { albums });
+  React.useEffect(() => {
+    if (!selectedAlbum) {
+      return;
     }
-  }, [albums]);
+    const stillExists = limitedAlbums.some((album) => album.id === selectedAlbum.id);
+    if (!stillExists) {
+      setSelectedAlbum(null);
+      if (window?.openai?.requestDisplayMode) {
+        window.openai.requestDisplayMode({ mode: "inline" });
+      }
+    }
+  }, [limitedAlbums, selectedAlbum]);
 
   const handleSelectAlbum = (album) => {
+    if (!album) return;
     setSelectedAlbum(album);
     if (window?.openai?.requestDisplayMode) {
       window.openai.requestDisplayMode({ mode: "fullscreen" });
@@ -141,17 +172,22 @@ function {ClassName}() {
 
   return (
     <div
-      className="relative antialiased w-full"
+      className={
+        "relative antialiased w-full " +
+        (isFullscreen
+          ? "bg-white"
+          : "bg-white border border-black/10 rounded-3xl overflow-hidden")
+      }
       style={{
         maxHeight,
-        height: displayMode === "fullscreen" ? maxHeight : undefined,
+        height: isFullscreen ? maxHeight : undefined,
       }}
     >
-      {displayMode !== "fullscreen" && (
-        <AlbumsCarousel onSelect={handleSelectAlbum} />
+      {!isFullscreen && (
+        <AlbumsCarousel albums={limitedAlbums} onSelect={handleSelectAlbum} />
       )}
 
-      {displayMode === "fullscreen" && selectedAlbum && (
+      {isFullscreen && selectedAlbum && (
         <FullscreenViewer album={selectedAlbum} onBack={handleBackToAlbums} />
       )}
     </div>

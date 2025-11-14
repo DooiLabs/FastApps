@@ -22,8 +22,9 @@ class {ClassName}Tool(BaseWidget):
 
     async def execute(self, input_data: {ClassName}Input, context=None, user=None):
         # Example: Return sample albums
-        return {
-            "albums": [
+        # OpenAI guidance: inline carousels feel best with 3-8 entries,
+        # so trim at the source to stay compliant when possible.
+        sample_albums = [
                 {
                     "id": "album-1",
                     "title": "Sample Album 1",
@@ -86,4 +87,8 @@ class {ClassName}Tool(BaseWidget):
                     ]
                 }
             ]
+        }
+
+        return {
+            "albums": sample_albums[:8]
         }
