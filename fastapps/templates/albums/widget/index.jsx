@@ -10,7 +10,7 @@ function AlbumsCarousel({ albums, onSelect }) {
   const normalizedAlbums = Array.isArray(albums)
     ? albums.filter((album) => album && album.cover)
     : [];
-  const hasMinimumItems = normalizedAlbums.length >= 3;
+  const hasAlbums = normalizedAlbums.length > 0;
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "center",
     loop: false,
@@ -36,11 +36,11 @@ function AlbumsCarousel({ albums, onSelect }) {
     };
   }, [emblaApi]);
 
-  if (!hasMinimumItems) {
+  if (!hasAlbums) {
     return (
       <div className="antialiased relative w-full py-5">
         <div className="text-center text-sm text-black/80 dark:text-white/80 py-6">
-          Provide between 3 and 8 albums with covers to enable the gallery.
+          No albums available. Provide up to 8 entries for best results.
         </div>
       </div>
     );
@@ -142,7 +142,7 @@ function {ClassName}() {
         "relative antialiased w-full text-black dark:text-white " +
         (isFullscreen
           ? "bg-white"
-          : "bg-transparent border border-black/10 rounded-3xl overflow-hidden")
+          : "bg-transparent overflow-hidden")
       }
       style={{
         maxHeight,

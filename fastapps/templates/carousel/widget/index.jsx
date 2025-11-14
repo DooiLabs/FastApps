@@ -10,7 +10,7 @@ function {ClassName}() {
 
   const normalizedCards = Array.isArray(cards) ? cards : [];
   const limitedCards = normalizedCards.slice(0, 8);
-  const hasMinimumItems = limitedCards.length >= 3;
+  const hasCards = limitedCards.length > 0;
 
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "center",
@@ -38,11 +38,11 @@ function {ClassName}() {
     };
   }, [emblaApi]);
 
-  if (!hasMinimumItems) {
+  if (!hasCards) {
     return (
       <div className="antialiased relative w-full py-5">
         <div className="text-center text-sm text-black/80 dark:text-white/80 py-6">
-          Not enough items to display a carousel. Please provide 3-8 entries.
+          No items to display. Provide up to 8 entries for best results.
         </div>
       </div>
     );
