@@ -13,14 +13,16 @@ export default function Card({ card }) {
         />
       </div>
       <div className="mt-3 flex flex-col flex-1">
-        <div className="text-base font-medium truncate line-clamp-1">{card.name}</div>
+        <div className="text-base font-medium truncate line-clamp-1 text-black dark:text-white">
+          {card.name}
+        </div>
         <div className="text-xs mt-1 flex items-center gap-1 text-black/80 dark:text-white/80">
           <Star className="h-3 w-3" aria-hidden="true" />
           {card.rating?.toFixed ? card.rating.toFixed(1) : card.rating}
           {card.price ? <span>· {card.price}</span> : null}
         </div>
         {card.description ? (
-          <div className="text-sm mt-2 flex-auto">
+          <div className="text-sm mt-2 flex-auto text-black/80 dark:text-white/80">
             {card.description}
           </div>
         ) : null}
