@@ -47,7 +47,7 @@ function AlbumsCarousel({ albums, onSelect }) {
   }
 
   return (
-    <div className="antialiased relative w-full text-black py-5 select-none">
+    <div className="antialiased relative w-full text-black dark:text-white py-5 select-none">
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex gap-5 items-stretch">
           {normalizedAlbums.map((album, i) => (
@@ -68,7 +68,7 @@ function AlbumsCarousel({ albums, onSelect }) {
         }
       >
         <div
-          className="h-full w-full border-l border-black/15 bg-gradient-to-r from-black/10 to-transparent"
+          className="h-full w-full border-l border-black/15 dark:border-white/15 bg-gradient-to-r from-black/10 dark:from-white/10 to-transparent"
           style={{
             WebkitMaskImage:
               "linear-gradient(to bottom, transparent 0%, white 30%, white 70%, transparent 100%)",
@@ -85,7 +85,7 @@ function AlbumsCarousel({ albums, onSelect }) {
         }
       >
         <div
-          className="h-full w-full border-r border-black/15 bg-gradient-to-l from-black/10 to-transparent"
+          className="h-full w-full border-r border-black/15 dark:border-white/15 bg-gradient-to-l from-black/10 dark:from-white/10 to-transparent"
           style={{
             WebkitMaskImage:
               "linear-gradient(to bottom, transparent 0%, white 30%, white 70%, transparent 100%)",
@@ -97,7 +97,7 @@ function AlbumsCarousel({ albums, onSelect }) {
       {canPrev && (
         <button
           aria-label="Previous"
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 inline-flex items-center justify-center h-8 w-8 rounded-full bg-white text-black shadow-lg ring ring-black/5 hover:bg-white"
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 inline-flex items-center justify-center h-8 w-8 rounded-full bg-white text-black shadow-sm ring-1 ring-black/10 hover:bg-black/5 dark:bg-white/10 dark:text-white dark:ring-white/20 dark:hover:bg-white/20"
           onClick={() => emblaApi && emblaApi.scrollPrev()}
           type="button"
         >
@@ -111,7 +111,7 @@ function AlbumsCarousel({ albums, onSelect }) {
       {canNext && (
         <button
           aria-label="Next"
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 inline-flex items-center justify-center h-8 w-8 rounded-full bg-white text-black shadow-lg ring ring-black/5 hover:bg-white"
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 inline-flex items-center justify-center h-8 w-8 rounded-full bg-white text-black shadow-sm ring-1 ring-black/10 hover:bg-black/5 dark:bg-white/10 dark:text-white dark:ring-white/20 dark:hover:bg-white/20"
           onClick={() => emblaApi && emblaApi.scrollNext()}
           type="button"
         >
@@ -173,7 +173,7 @@ function {ClassName}() {
   return (
     <div
       className={
-        "relative antialiased w-full " +
+        "relative antialiased w-full text-black dark:text-white " +
         (isFullscreen
           ? "bg-white"
           : "bg-transparent border border-black/10 rounded-3xl overflow-hidden")
