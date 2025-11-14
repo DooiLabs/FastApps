@@ -176,7 +176,7 @@ function {ClassName}() {
         "relative antialiased w-full " +
         (isFullscreen
           ? "bg-white"
-          : "bg-white border border-black/10 rounded-3xl overflow-hidden")
+          : "bg-transparent border border-black/10 rounded-3xl overflow-hidden")
       }
       style={{
         maxHeight,
