@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useWidgetProps } from "fastapps";
 import useEmblaCarousel from "embla-carousel-react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -8,11 +8,9 @@ import "./index.css";
 function {ClassName}() {
   const { cards } = useWidgetProps() || {};
 
-  useEffect(() => {
-    if (cards) {
-      console.log('Carousel widget props:', { cards });
-    }
-  }, [cards]);
+  const normalizedCards = Array.isArray(cards) ? cards : [];
+  const limitedCards = normalizedCards.slice(0, 8);
+  const hasMinimumItems = limitedCards.length >= 3;
 
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "center",
@@ -40,59 +38,34 @@ function {ClassName}() {
     };
   }, [emblaApi]);
 
+  if (!hasMinimumItems) {
+    return (
+      <div className="antialiased relative w-full py-5">
+        <div className="text-center text-sm text-black/80 dark:text-white/80 py-6">
+          Not enough items to display a carousel. Please provide 3-8 entries.
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="antialiased relative w-full text-black py-5 bg-white">
+    <div className="antialiased relative w-full py-5">
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex gap-4 items-stretch">
-          {(cards || []).map((card, i, arr) => (
+          {limitedCards.map((card, i) => (
             <div
               key={card.id}
-              className={`shrink-0 ${i === 0 ? "ml-5" : ""} ${i === arr.length - 1 ? "mr-5" : ""}`}
+              className={`shrink-0 ${i === 0 ? "ml-5" : ""} ${i === limitedCards.length - 1 ? "mr-5" : ""}`}
             >
               <Card card={card} />
             </div>
           ))}
         </div>
       </div>
-      {/* Edge gradients */}
-      <div
-        aria-hidden
-        className={
-          "pointer-events-none absolute inset-y-0 left-0 w-3 z-[5] transition-opacity duration-200 " +
-          (canPrev ? "opacity-100" : "opacity-0")
-        }
-      >
-        <div
-          className="h-full w-full border-l border-black/15 bg-gradient-to-r from-black/10 to-transparent"
-          style={{
-            WebkitMaskImage:
-              "linear-gradient(to bottom, transparent 0%, white 30%, white 70%, transparent 100%)",
-            maskImage:
-              "linear-gradient(to bottom, transparent 0%, white 30%, white 70%, transparent 100%)",
-          }}
-        />
-      </div>
-      <div
-        aria-hidden
-        className={
-          "pointer-events-none absolute inset-y-0 right-0 w-3 z-[5] transition-opacity duration-200 " +
-          (canNext ? "opacity-100" : "opacity-0")
-        }
-      >
-        <div
-          className="h-full w-full border-r border-black/15 bg-gradient-to-l from-black/10 to-transparent"
-          style={{
-            WebkitMaskImage:
-              "linear-gradient(to bottom, transparent 0%, white 30%, white 70%, transparent 100%)",
-            maskImage:
-              "linear-gradient(to bottom, transparent 0%, white 30%, white 70%, transparent 100%)",
-          }}
-        />
-      </div>
       {canPrev && (
         <button
-          aria-label="Previous"
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 inline-flex items-center justify-center h-8 w-8 rounded-full bg-white text-black shadow-lg ring ring-black/5 hover:bg-white"
+          aria-label="Previous carousel item"
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 inline-flex items-center justify-center h-8 w-8 rounded-full bg-white text-black shadow-sm ring-1 ring-black/10 hover:bg-black/5 dark:bg-white/10 dark:text-white dark:ring-white/20 dark:hover:bg-white/20"
           onClick={() => emblaApi && emblaApi.scrollPrev()}
           type="button"
         >
@@ -105,8 +78,8 @@ function {ClassName}() {
       )}
       {canNext && (
         <button
-          aria-label="Next"
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 inline-flex items-center justify-center h-8 w-8 rounded-full bg-white text-black shadow-lg ring ring-black/5 hover:bg-white"
+          aria-label="Next carousel item"
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 inline-flex items-center justify-center h-8 w-8 rounded-full bg-white text-black shadow-sm ring-1 ring-black/10 hover:bg-black/5 dark:bg-white/10 dark:text-white dark:ring-white/20 dark:hover:bg-white/20"
           onClick={() => emblaApi && emblaApi.scrollNext()}
           type="button"
         >

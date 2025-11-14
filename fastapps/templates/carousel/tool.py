@@ -29,6 +29,8 @@ class {ClassName}Tool(BaseWidget):
 
     async def execute(self, input_data: {ClassName}Input, context=None, user=None):
         # Example: Return sample cards for carousel
+        # OpenAI guidance: carousels work best when you keep them between 3-8 items.
+        # Trim your data at the source when possible so the UI stays compliant.
         return {
             "cards": [
                 {
