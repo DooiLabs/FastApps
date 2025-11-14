@@ -10,7 +10,7 @@ function AlbumCard({ album, onSelect }) {
   return (
     <button
       type="button"
-      className="group relative cursor-pointer flex-shrink-0 w-[272px] bg-white dark:bg-white/5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/40 dark:focus-visible:ring-white/40 rounded-3xl"
+      className="group relative cursor-pointer flex-shrink-0 w-[272px] bg-transparent text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/40 dark:focus-visible:ring-white/40 rounded-3xl"
       onClick={() => onSelect?.(album)}
       aria-label={`Open ${title}`}
     >
