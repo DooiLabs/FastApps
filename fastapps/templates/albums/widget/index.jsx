@@ -60,40 +60,6 @@ function AlbumsCarousel({ albums, onSelect }) {
           ))}
         </div>
       </div>
-      <div
-        aria-hidden
-        className={
-          "pointer-events-none absolute inset-y-0 left-0 w-3 z-[5] transition-opacity duration-200 " +
-          (canPrev ? "opacity-100" : "opacity-0")
-        }
-      >
-        <div
-          className="h-full w-full border-l border-black/15 dark:border-white/15 bg-gradient-to-r from-black/10 dark:from-white/10 to-transparent"
-          style={{
-            WebkitMaskImage:
-              "linear-gradient(to bottom, transparent 0%, white 30%, white 70%, transparent 100%)",
-            maskImage:
-              "linear-gradient(to bottom, transparent 0%, white 30%, white 70%, transparent 100%)",
-          }}
-        />
-      </div>
-      <div
-        aria-hidden
-        className={
-          "pointer-events-none absolute inset-y-0 right-0 w-3 z-[5] transition-opacity duration-200 " +
-          (canNext ? "opacity-100" : "opacity-0")
-        }
-      >
-        <div
-          className="h-full w-full border-r border-black/15 dark:border-white/15 bg-gradient-to-l from-black/10 dark:from-white/10 to-transparent"
-          style={{
-            WebkitMaskImage:
-              "linear-gradient(to bottom, transparent 0%, white 30%, white 70%, transparent 100%)",
-            maskImage:
-              "linear-gradient(to bottom, transparent 0%, white 30%, white 70%, transparent 100%)",
-          }}
-        />
-      </div>
       {canPrev && (
         <button
           aria-label="Previous"
