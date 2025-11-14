@@ -22,10 +22,7 @@ class {ClassName}Tool(BaseWidget):
 
     async def execute(self, input_data: {ClassName}Input, context=None, user=None):
         # Example: Return sample items
-        return {
-            "title": "Sample List",
-            "description": "A list of items",
-            "items": [
+        sample_items = [
                 {
                     "id": 1,
                     "name": "Sample Item 1",
@@ -62,4 +59,10 @@ class {ClassName}Tool(BaseWidget):
                     "info": "Additional info 5"
                 },
             ]
+
+        return {
+            "title": "Sample List",
+            "description": "A list of items",
+            # Inline lists feel best when kept short; trim at 7 entries.
+            "items": sample_items[:7],
         }

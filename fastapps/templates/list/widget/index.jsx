@@ -1,114 +1,91 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useWidgetProps } from "fastapps";
 import { PlusCircle, Star } from "lucide-react";
 import "./index.css";
 
 function {ClassName}() {
   const { title, description, items } = useWidgetProps() || {};
-
-  useEffect(() => {
-    if (title || items) {
-      console.log('List widget props:', { title, description, items });
-    }
-  }, [title, description, items]);
+  const normalizedItems = Array.isArray(items) ? items.slice(0, 7) : [];
+  const hasItems = normalizedItems.length > 0;
 
   return (
-    <div className="antialiased w-full text-black px-4 pb-2 border border-black/10 rounded-2xl sm:rounded-3xl overflow-hidden bg-white">
+    <div className="antialiased w-full text-black dark:text-white px-4 pb-2 border border-black/10 dark:border-white/10 rounded-2xl sm:rounded-3xl overflow-hidden bg-white dark:bg-white/5">
       <div className="max-w-full">
-        <div className="flex flex-row items-center gap-4 sm:gap-4 border-b border-black/5 py-4">
-          <div
-            className="sm:w-18 w-16 aspect-square rounded-xl bg-cover bg-center"
-            style={{
-              backgroundImage:
-                "url(https://pub-d9760dbd87764044a85486be2fdf7f9f.r2.dev/fastapps.png)",
-            }}
-          ></div>
-          <div>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 border-b border-black/5 dark:border-white/10 py-4">
+          <div className="flex flex-col gap-1">
             <div className="text-base sm:text-xl font-medium">
               {title || "List Title"}
             </div>
-            <div className="text-sm text-black/60">
+            <div className="text-sm text-black/80 dark:text-white/80">
               {description || "A list of items"}
             </div>
           </div>
-          <div className="flex-auto hidden sm:flex justify-end pr-2">
+          <div className="sm:ml-auto">
             <button
               type="button"
-              className="cursor-pointer inline-flex items-center rounded-full bg-[#010304] text-white px-4 py-1.5 sm:text-md text-sm font-medium hover:opacity-90 active:opacity-100"
+              className="cursor-pointer inline-flex items-center rounded-full border border-black/20 dark:border-white/20 bg-white text-black dark:bg-white/10 dark:text-white px-4 py-1.5 text-sm font-medium hover:bg-black/5 active:bg-black/10 dark:hover:bg-white/20"
             >
-              Save List
+              Save list
             </button>
           </div>
         </div>
-        <div className="min-w-full text-sm flex flex-col">
-          {(items || []).slice(0, 7).map((item, i) => (
-            <div
-              key={item.id || i}
-              className="px-3 -mx-2 rounded-2xl hover:bg-black/5"
-            >
-              <div
-                style={{
-                  borderBottom:
-                    i === 7 - 1 ? "none" : "1px solid rgba(0, 0, 0, 0.05)",
-                }}
-                className="flex w-full items-center hover:border-black/0! gap-2"
-              >
-                <div className="py-3 pr-3 min-w-0 w-full sm:w-3/5">
-                  <div className="flex items-center gap-3">
+        <ol className="min-w-full text-sm flex flex-col divide-y divide-black/10 dark:divide-white/10">
+          {normalizedItems.map((item, i) => {
+            const rank = i + 1;
+            const infoText = item?.info || "–";
+            return (
+              <li key={item?.id || i} className="px-1 sm:px-2">
+                <div className="flex w-full items-center gap-3 py-3">
+                  <div className="font-medium text-black/80 dark:text-white/80 hidden sm:block w-4 text-right">
+                    {rank}
+                  </div>
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     <img
-                      src={item.thumbnail || "https://via.placeholder.com/44"}
-                      alt={item.name}
-                      className="h-10 w-10 sm:h-11 sm:w-11 rounded-lg object-cover ring ring-black/5"
+                      src={item?.thumbnail || "https://via.placeholder.com/44"}
+                      alt={item?.name || `Item ${rank}`}
+                      className="h-10 w-10 sm:h-11 sm:w-11 rounded-lg object-cover ring ring-black/5 dark:ring-white/10"
+                      loading="lazy"
                     />
-                    <div className="w-3 text-end sm:block hidden text-sm text-black/40">
-                      {i + 1}
-                    </div>
-                    <div className="min-w-0 sm:pl-1 flex flex-col items-start h-full">
-                      <div className="font-medium text-sm sm:text-md truncate max-w-[40ch]">
-                        {item.name}
+                    <div className="min-w-0 flex flex-col">
+                      <div className="font-medium text-sm sm:text-base truncate max-w-[40ch]">
+                        {item?.name || `Item ${rank}`}
                       </div>
-                      <div className="mt-1 sm:mt-0.25 flex items-center gap-3 text-black/70 text-sm">
+                      <div className="mt-1 flex items-center gap-3 text-black/80 dark:text-white/80 text-sm">
                         <div className="flex items-center gap-1">
-                          <Star
-                            strokeWidth={1.5}
-                            className="h-3 w-3 text-black"
-                          />
+                          <Star strokeWidth={1.5} className="h-3 w-3" aria-hidden="true" />
                           <span>
-                            {item.rating?.toFixed
+                            {typeof item?.rating === "number"
                               ? item.rating.toFixed(1)
-                              : item.rating}
+                              : item?.rating || "–"}
                           </span>
                         </div>
-                        <div className="whitespace-nowrap sm:hidden">
-                          {item.info || "–"}
-                        </div>
+                        <div className="whitespace-nowrap sm:hidden">{infoText}</div>
                       </div>
                     </div>
                   </div>
+                  <div className="hidden sm:block text-sm text-black/80 dark:text-white/80 whitespace-nowrap">
+                    {infoText}
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 rounded-full border border-black/20 dark:border-white/20 px-3 py-1 text-sm font-medium text-black dark:text-white hover:bg-black/5 active:bg-black/10 dark:hover:bg-white/20"
+                      aria-label={`Add ${item?.name || `item ${rank}`} to list`}
+                    >
+                      <PlusCircle strokeWidth={1.5} className="h-4 w-4" aria-hidden="true" />
+                      <span>Add</span>
+                    </button>
+                  </div>
                 </div>
-                <div className="hidden sm:block text-end py-2 px-3 text-sm text-black/60 whitespace-nowrap flex-auto">
-                  {item.info || "–"}
-                </div>
-                <div className="py-2 whitespace-nowrap flex justify-end">
-                  <PlusCircle strokeWidth={1.5} className="h-5 w-5" />
-                </div>
-              </div>
-            </div>
-          ))}
-          {(!items || items.length === 0) && (
-            <div className="py-6 text-center text-black/60">
-              No items found.
-            </div>
-          )}
-        </div>
-        <div className="sm:hidden px-0 pt-2 pb-2">
-          <button
-            type="button"
-            className="w-full cursor-pointer inline-flex items-center justify-center rounded-full bg-[#F46C21] text-white px-4 py-2 font-medium hover:opacity-90 active:opacity-100"
-          >
-            Save List
-          </button>
-        </div>
+              </li>
+            );
+          })}
+        </ol>
+        {!hasItems && (
+          <div className="py-6 text-center text-black/80 dark:text-white/80">
+            No items available. Provide up to 7 entries for best results.
+          </div>
+        )}
       </div>
     </div>
   );
