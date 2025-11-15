@@ -134,15 +134,10 @@ class WidgetMCPServer:
             self.token_verifier_instance = verifier
 
         # Initialize FastMCP with or without auth
+        fastmcp_kwargs: Dict[str, Any] = {"name": name, "stateless_http": True}
         if auth_settings:
-            self.mcp = FastMCP(
-                name=name,
-                stateless_http=True,
-                token_verifier=verifier,
-                auth=auth_settings,
-            )
-        else:
-            self.mcp = FastMCP(name=name)
+            fastmcp_kwargs.update({"token_verifier": verifier, "auth": auth_settings})
+        self.mcp = FastMCP(**fastmcp_kwargs)
 
         self._register_handlers()
 
