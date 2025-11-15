@@ -134,7 +134,7 @@ app = server.get_app()
 
 if __name__ == "__main__":
     print(f"\\n[START] Starting server with {len(tools)} tools")
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    server.mcp.run(transport="streamable-http")
 '''
 
 
